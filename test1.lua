@@ -73,6 +73,9 @@ local function createColorPicker(config, parent, headerColor)
     local cycling = false
     local hue = 0
 
+    local spacing = 45
+    local baseOffset = 200 -- Equal spacing from tab to R box
+
     local rBox = Instance.new("TextBox")
     local gBox = Instance.new("TextBox")
     local bBox = Instance.new("TextBox")
@@ -81,7 +84,7 @@ local function createColorPicker(config, parent, headerColor)
 
     for i, box in ipairs(boxes) do
         box.Size = UDim2.new(0, 40, 1, 0)
-        box.Position = UDim2.new(0, 245 + (i - 1) * 45, 0, 0)
+        box.Position = UDim2.new(0, baseOffset + (i - 1) * spacing, 0, 0)
         box.PlaceholderText = ({"R", "G", "B"})[i]
         box.Text = ""
         box.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
@@ -107,7 +110,7 @@ local function createColorPicker(config, parent, headerColor)
     end
 
     cycleToggle.Size = UDim2.new(0, 50, 1, 0)
-    cycleToggle.Position = UDim2.new(0, 390, 0, 0)
+    cycleToggle.Position = UDim2.new(0, baseOffset + (#boxes) * spacing, 0, 0)
     cycleToggle.Text = "Cycle"
     cycleToggle.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     cycleToggle.BackgroundTransparency = 0.3
@@ -256,8 +259,3 @@ end
 return {
     CreateTab = CreateTab
 }
-
-
-
-
-
