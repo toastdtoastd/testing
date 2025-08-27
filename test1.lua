@@ -9,7 +9,7 @@ screenGui.ResetOnSpawn = false
 screenGui.IgnoreGuiInset = true
 screenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
 
-local function createBaseElement(config, parent, headerColor)
+local function createBaseElement(config, parent, tab)
     local button = Instance.new("TextButton")
     button.Size = UDim2.new(1, 0, 0, 24)
     button.Text = config.Text
@@ -21,36 +21,47 @@ local function createBaseElement(config, parent, headerColor)
     button.BorderSizePixel = 0
     button.AutoButtonColor = false
     button.Parent = parent
+
+    -- Dynamic highlight color
+    local function updateHighlight()
+        local color = tab._Color
+        button.MouseEnter:Connect(function()
+            TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = color}):Play()
+        end)
+        button.MouseLeave:Connect(function()
+            if not button:GetAttribute("Active") then
+                TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40, 40, 40)}):Play()
+            end
+        end)
+    end
+
+    updateHighlight()
     return button
 end
 
-local function createButton(config, parent, headerColor)
-    local btn = createBaseElement(config, parent, headerColor)
+local function createButton(config, parent, tab)
+    local btn = createBaseElement(config, parent, tab)
 
-    btn.MouseEnter:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = headerColor}):Play()
-    end)
-    btn.MouseLeave:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40, 40, 40)}):Play()
-    end)
     btn.MouseButton1Click:Connect(function()
-        TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundColor3 = headerColor}):Play()
+        btn:SetAttribute("Active", true)
+        TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundColor3 = tab._Color}):Play()
         if config.Function then config.Function() end
         wait(0.1)
+        btn:SetAttribute("Active", false)
         TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40, 40, 40)}):Play()
     end)
 
     return btn
 end
 
-local function createToggle(config, parent, headerColor)
+local function createToggle(config, parent, tab)
     local state = config.State or false
-    local btn = createBaseElement(config, parent, headerColor)
-    btn.BackgroundColor3 = state and headerColor or Color3.fromRGB(40, 40, 40)
+    local btn = createBaseElement(config, parent, tab)
+    btn.BackgroundColor3 = state and tab._Color or Color3.fromRGB(40, 40, 40)
 
     btn.MouseEnter:Connect(function()
         if not state then
-            TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = headerColor}):Play()
+            TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = tab._Color}):Play()
         end
     end)
     btn.MouseLeave:Connect(function()
@@ -60,15 +71,15 @@ local function createToggle(config, parent, headerColor)
     end)
     btn.MouseButton1Click:Connect(function()
         state = not state
-        btn.BackgroundColor3 = state and headerColor or Color3.fromRGB(40, 40, 40)
+        btn.BackgroundColor3 = state and tab._Color or Color3.fromRGB(40, 40, 40)
         if config.Function then config.Function(state) end
     end)
 
     return btn
 end
 
-local function createColorPicker(config, parent, headerColor)
-    local btn = createBaseElement(config, parent, headerColor)
+local function createColorPicker(config, parent, tab)
+    local btn = createBaseElement(config, parent, tab)
     local expanded = false
     local cycling = false
     local hue = 0
@@ -78,7 +89,7 @@ local function createColorPicker(config, parent, headerColor)
     local expansion = Instance.new("Frame")
     expansion.Size = btn.Size
     expansion.Position = UDim2.new(0, btn.Size.X.Offset, 0, 0)
-    expansion.BackgroundColor3 = headerColor
+    expansion.BackgroundColor3 = tab._Color
     expansion.BackgroundTransparency = 0.3
     expansion.BorderSizePixel = 0
     expansion.Visible = false
@@ -115,8 +126,13 @@ local function createColorPicker(config, parent, headerColor)
             r = math.clamp(r, 0, 255)
             g = math.clamp(g, 0, 255)
             b = math.clamp(b, 0, 255)
+            local newColor = Color3.fromRGB(r, g, b)
+            tab._Color = newColor
+            tab._Header.BackgroundColor3 = newColor
+            expansion.BackgroundColor3 = newColor
+            btn.BackgroundColor3 = newColor
             if config.Function then
-                config.Function(Color3.fromRGB(r, g, b))
+                config.Function(newColor)
             end
         end)
     end
@@ -135,7 +151,7 @@ local function createColorPicker(config, parent, headerColor)
 
     cycleToggle.MouseButton1Click:Connect(function()
         cycling = not cycling
-        cycleToggle.BackgroundColor3 = cycling and headerColor or Color3.fromRGB(30, 30, 30)
+        cycleToggle.BackgroundColor3 = cycling and tab._Color or Color3.fromRGB(30, 30, 30)
     end)
 
     RunService.RenderStepped:Connect(function()
@@ -146,41 +162,33 @@ local function createColorPicker(config, parent, headerColor)
             rBox.Text = tostring(r)
             gBox.Text = tostring(g)
             bBox.Text = tostring(b)
+            tab._Color = color
+            tab._Header.BackgroundColor3 = color
+            expansion.BackgroundColor3 = color
+            btn.BackgroundColor3 = color
             if config.Function then
                 config.Function(color)
             end
         end
     end)
 
-    btn.MouseEnter:Connect(function()
-        if not expanded then
-            TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = headerColor}):Play()
-        end
-    end)
-
-    btn.MouseLeave:Connect(function()
-        if not expanded then
-            TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40, 40, 40)}):Play()
-        end
-    end)
-
     btn.MouseButton1Click:Connect(function()
         expanded = not expanded
         expansion.Visible = expanded
-        btn.BackgroundColor3 = expanded and headerColor or Color3.fromRGB(40, 40, 40)
+        btn.BackgroundColor3 = expanded and tab._Color or Color3.fromRGB(40, 40, 40)
     end)
 
     return btn
 end
 
-local function createSlider(config, parent, headerColor)
-    local btn = createBaseElement(config, parent, headerColor)
+local function createSlider(config, parent, tab)
+    local btn = createBaseElement(config, parent, tab)
     local expanded = false
 
     local expansion = Instance.new("Frame")
     expansion.Size = btn.Size
     expansion.Position = UDim2.new(0, btn.Size.X.Offset, 0, 0)
-    expansion.BackgroundColor3 = headerColor
+    expansion.BackgroundColor3 = tab._Color
     expansion.BackgroundTransparency = 0.3
     expansion.BorderSizePixel = 0
     expansion.Visible = false
@@ -196,7 +204,7 @@ local function createSlider(config, parent, headerColor)
     local precision = config.Precise or 1
 
     local sliderBar = Instance.new("Frame")
-    sliderBar.Size = UDim2.new(0, 120, 0, 6)
+    sliderBar.Size = UDim2.new(1, -20, 0, 6)
     sliderBar.Position = UDim2.new(0, 10, 0.5, -3)
     sliderBar.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
     sliderBar.BorderSizePixel = 0
@@ -210,7 +218,7 @@ local function createSlider(config, parent, headerColor)
     fill.Parent = sliderBar
 
     local valueLabel = Instance.new("TextLabel")
-    valueLabel.Size = UDim2.new(0, 120, 0, 16)
+    valueLabel.Size = UDim2.new(1, -20, 0, 16)
     valueLabel.Position = UDim2.new(0, 10, 0, -18)
     valueLabel.TextColor3 = Color3.new(1, 1, 1)
     valueLabel.BackgroundTransparency = 1
@@ -253,22 +261,10 @@ local function createSlider(config, parent, headerColor)
         end
     end)
 
-    btn.MouseEnter:Connect(function()
-        if not expanded then
-            TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = headerColor}):Play()
-        end
-    end)
-
-    btn.MouseLeave:Connect(function()
-        if not expanded then
-            TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40, 40, 40)}):Play()
-        end
-    end)
-
     btn.MouseButton1Click:Connect(function()
         expanded = not expanded
         expansion.Visible = expanded
-        btn.BackgroundColor3 = expanded and headerColor or Color3.fromRGB(40, 40, 40)
+        btn.BackgroundColor3 = expanded and tab._Color or Color3.fromRGB(40, 40, 40)
         updateVisual()
     end)
 
@@ -352,21 +348,22 @@ local function CreateTab(config)
 
     local tab = {}
     tab._Header = header
+    tab._Color = color
 
     function tab:AddButton(cfg)
-        return createButton(cfg, body, color)
+        return createButton(cfg, body, tab)
     end
 
     function tab:AddToggle(cfg)
-        return createToggle(cfg, body, color)
+        return createToggle(cfg, body, tab)
     end
 
     function tab:AddColorPicker(cfg)
-        return createColorPicker(cfg, body, color)
+        return createColorPicker(cfg, body, tab)
     end
 
     function tab:AddSlider(cfg)
-        return createSlider(cfg, body, color)
+        return createSlider(cfg, body, tab)
     end
 
     return tab
@@ -375,3 +372,4 @@ end
 return {
     CreateTab = CreateTab
 }
+
