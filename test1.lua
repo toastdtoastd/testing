@@ -59,11 +59,7 @@ local function createToggle(config, parent, tab)
     local isHovered = trackHover(btn)
 
     RunService.RenderStepped:Connect(function()
-        if state then
-            btn.BackgroundColor3 = tab._Color
-        else
-            btn.BackgroundColor3 = isHovered() and tab._Color or Color3.fromRGB(40, 40, 40)
-        end
+        btn.BackgroundColor3 = state and tab._Color or (isHovered() and tab._Color or Color3.fromRGB(40, 40, 40))
     end)
 
     btn.MouseButton1Click:Connect(function()
@@ -76,6 +72,7 @@ end
 
 local function createColorPicker(config, parent, tab)
     local btn = createBaseElement(config, parent, tab)
+    local isHovered = trackHover(btn)
     local expanded = false
     local cycling = false
     local hue = 0
@@ -168,6 +165,10 @@ local function createColorPicker(config, parent, tab)
             end
         end
 
+        if not expanded then
+            btn.BackgroundColor3 = isHovered() and tab._Color or Color3.fromRGB(40, 40, 40)
+        end
+
         if not cycling then
             cycleToggle.BackgroundColor3 = hovered and tab._Color or Color3.fromRGB(30, 30, 30)
         end
@@ -184,6 +185,7 @@ end
 
 local function createSlider(config, parent, tab)
     local btn = createBaseElement(config, parent, tab)
+    local isHovered = trackHover(btn)
     local expanded = false
 
     local expansion = Instance.new("Frame")
@@ -264,12 +266,16 @@ local function createSlider(config, parent, tab)
 
     RunService.RenderStepped:Connect(function()
         expansion.BackgroundColor3 = tab._Color
+        if not expanded then
+            btn.BackgroundColor3 = isHovered() and tab._Color or Color3.fromRGB(40, 40, 40)
+        else
+            btn.BackgroundColor3 = tab._Color
+        end
     end)
 
     btn.MouseButton1Click:Connect(function()
         expanded = not expanded
         expansion.Visible = expanded
-        btn.BackgroundColor3 = expanded and tab._Color or Color3.fromRGB(40, 40, 40)
         updateVisual()
     end)
 
