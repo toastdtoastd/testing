@@ -5,15 +5,20 @@ local Players = game:GetService("Players")
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "MeteorUILib"
 screenGui.ResetOnSpawn = false
+screenGui.IgnoreGuiInset = true
 screenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
 
 local function createBaseElement(config, parent, headerColor)
     local button = Instance.new("TextButton")
-    button.Size = UDim2.new(1, 0, 0, 25)
+    button.Size = UDim2.new(1, 0, 0, 24)
     button.Text = config.Text
     button.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    button.BackgroundTransparency = 0.3
     button.TextColor3 = Color3.new(1, 1, 1)
+    button.Font = Enum.Font.Code
+    button.TextSize = 16
     button.BorderSizePixel = 0
+    button.AutoButtonColor = false
     button.Parent = parent
     return button
 end
@@ -84,7 +89,7 @@ local function CreateTab(config)
     label.Text = config.Text
     label.TextColor3 = Color3.new(1, 1, 1)
     label.BackgroundTransparency = 1
-    label.Font = Enum.Font.SourceSans
+    label.Font = Enum.Font.Code
     label.TextSize = 18
     label.Parent = header
 
@@ -92,9 +97,12 @@ local function CreateTab(config)
     minimize.Size = UDim2.new(0, 30, 1, 0)
     minimize.Position = UDim2.new(1, -30, 0, 0)
     minimize.Text = "-"
-    minimize.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    minimize.TextColor3 = Color3.new(1, 1, 1)
+    minimize.BackgroundTransparency = 1
+    minimize.TextColor3 = Color3.new(0, 0, 0)
+    minimize.Font = Enum.Font.Code
+    minimize.TextSize = 18
     minimize.BorderSizePixel = 0
+    minimize.AutoButtonColor = false
     minimize.Parent = header
 
     local body = Instance.new("Frame")
@@ -105,7 +113,7 @@ local function CreateTab(config)
 
     local layout = Instance.new("UIListLayout")
     layout.SortOrder = Enum.SortOrder.LayoutOrder
-    layout.Padding = UDim.new(0, 2)
+    layout.Padding = UDim.new(0, 0)
     layout.Parent = body
 
     local minimized = false
@@ -119,7 +127,7 @@ local function CreateTab(config)
     header.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
-            offset = input.Position - container.Position
+            offset = Vector2.new(input.Position.X - container.Position.X.Offset, input.Position.Y - container.Position.Y.Offset)
         end
     end)
     header.InputEnded:Connect(function(input)
@@ -146,7 +154,6 @@ local function CreateTab(config)
     return tab
 end
 
--- Expose the API
 return {
     CreateTab = CreateTab
 }
