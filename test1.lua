@@ -54,12 +54,22 @@ end
 local function createToggle(config, parent, tab)
     local state = config.State or false
     local btn = createBaseElement(config, parent, tab)
-    btn.BackgroundColor3 = state and tab._Color or Color3.fromRGB(40, 40, 40)
+    local hovered = false
+
+    btn.MouseEnter:Connect(function() hovered = true end)
+    btn.MouseLeave:Connect(function() hovered = false end)
 
     btn.MouseButton1Click:Connect(function()
         state = not state
-        btn.BackgroundColor3 = state and tab._Color or Color3.fromRGB(40, 40, 40)
         if config.Function then config.Function(state) end
+    end)
+
+    RunService.RenderStepped:Connect(function()
+        if state then
+            btn.BackgroundColor3 = tab._Color
+        else
+            btn.BackgroundColor3 = hovered and tab._Color or Color3.fromRGB(40, 40, 40)
+        end
     end)
 
     return btn
