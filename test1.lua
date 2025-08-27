@@ -77,7 +77,7 @@ local function createColorPicker(config, parent, headerColor)
 
     local expansion = Instance.new("Frame")
     expansion.Size = btn.Size
-    expansion.Position = UDim2.new(0, btn.Size.X.Offset, 0, 0) -- placeholder
+    expansion.Position = UDim2.new(0, btn.Size.X.Offset, 0, 0)
     expansion.BackgroundColor3 = headerColor
     expansion.BackgroundTransparency = 0.3
     expansion.BorderSizePixel = 0
@@ -173,6 +173,108 @@ local function createColorPicker(config, parent, headerColor)
     return btn
 end
 
+local function createSlider(config, parent, headerColor)
+    local btn = createBaseElement(config, parent, headerColor)
+    local expanded = false
+
+    local expansion = Instance.new("Frame")
+    expansion.Size = btn.Size
+    expansion.Position = UDim2.new(0, btn.Size.X.Offset, 0, 0)
+    expansion.BackgroundColor3 = headerColor
+    expansion.BackgroundTransparency = 0.3
+    expansion.BorderSizePixel = 0
+    expansion.Visible = false
+    expansion.Parent = btn
+
+    btn:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+        expansion.Position = UDim2.new(0, btn.AbsoluteSize.X, 0, 0)
+    end)
+
+    local min = config.Min or 0
+    local max = config.Max or 100
+    local value = config.Value or min
+    local precision = config.Precise or 1
+
+    local sliderBar = Instance.new("Frame")
+    sliderBar.Size = UDim2.new(0, 120, 0, 6)
+    sliderBar.Position = UDim2.new(0, 10, 0.5, -3)
+    sliderBar.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    sliderBar.BorderSizePixel = 0
+    sliderBar.Parent = expansion
+
+    local fill = Instance.new("Frame")
+    fill.Size = UDim2.new(0, 0, 1, 0)
+    fill.Position = UDim2.new(0, 0, 0, 0)
+    fill.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+    fill.BorderSizePixel = 0
+    fill.Parent = sliderBar
+
+    local valueLabel = Instance.new("TextLabel")
+    valueLabel.Size = UDim2.new(0, 120, 0, 16)
+    valueLabel.Position = UDim2.new(0, 10, 0, -18)
+    valueLabel.TextColor3 = Color3.new(1, 1, 1)
+    valueLabel.BackgroundTransparency = 1
+    valueLabel.Font = Enum.Font.Code
+    valueLabel.TextSize = 16
+    valueLabel.TextXAlignment = Enum.TextXAlignment.Center
+    valueLabel.Parent = expansion
+
+    local dragging = false
+
+    local function updateVisual()
+        local percent = (value - min) / (max - min)
+        local width = percent * sliderBar.AbsoluteSize.X
+        fill.Size = UDim2.new(0, width, 1, 0)
+        valueLabel.Text = tostring(math.floor(value * 10^precision) / 10^precision)
+    end
+
+    sliderBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+        end
+    end)
+
+    sliderBar.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local rel = input.Position.X - sliderBar.AbsolutePosition.X
+            local percent = math.clamp(rel / sliderBar.AbsoluteSize.X, 0, 1)
+            value = min + (max - min) * percent
+            value = tonumber(string.format("%." .. precision .. "f", value))
+            updateVisual()
+            if config.Function then
+                config.Function(value)
+            end
+        end
+    end)
+
+    btn.MouseEnter:Connect(function()
+        if not expanded then
+            TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = headerColor}):Play()
+        end
+    end)
+
+    btn.MouseLeave:Connect(function()
+        if not expanded then
+            TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40, 40, 40)}):Play()
+        end
+    end)
+
+    btn.MouseButton1Click:Connect(function()
+        expanded = not expanded
+        expansion.Visible = expanded
+        btn.BackgroundColor3 = expanded and headerColor or Color3.fromRGB(40, 40, 40)
+        updateVisual()
+    end)
+
+    return btn
+end
+
 local function CreateTab(config)
     local color = Color3.fromRGB(unpack(config.Color))
     local pos = UDim2.new(0, config.Pos[1], 0, config.Pos[2])
@@ -249,6 +351,7 @@ local function CreateTab(config)
     end)
 
     local tab = {}
+    tab._Header = header
 
     function tab:AddButton(cfg)
         return createButton(cfg, body, color)
@@ -260,6 +363,10 @@ local function CreateTab(config)
 
     function tab:AddColorPicker(cfg)
         return createColorPicker(cfg, body, color)
+    end
+
+    function tab:AddSlider(cfg)
+        return createSlider(cfg, body, color)
     end
 
     return tab
