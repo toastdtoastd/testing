@@ -74,7 +74,7 @@ local function createColorPicker(config, parent, headerColor)
     local hue = 0
 
     local spacing = 45
-    local baseOffset = 200 -- Equal spacing from tab to R box
+    local baseOffset = spacing -- Equal spacing from tab to R box
 
     local rBox = Instance.new("TextBox")
     local gBox = Instance.new("TextBox")
