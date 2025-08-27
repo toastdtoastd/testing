@@ -74,7 +74,19 @@ local function createColorPicker(config, parent, headerColor)
     local hue = 0
 
     local spacing = 45
-    local baseOffset = 0 -- boxes appear over the button
+
+    local expansion = Instance.new("Frame")
+    expansion.Size = btn.Size
+    expansion.Position = UDim2.new(0, btn.Size.X.Offset, 0, 0) -- placeholder
+    expansion.BackgroundColor3 = headerColor
+    expansion.BackgroundTransparency = 0.3
+    expansion.BorderSizePixel = 0
+    expansion.Visible = false
+    expansion.Parent = btn
+
+    btn:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+        expansion.Position = UDim2.new(0, btn.AbsoluteSize.X, 0, 0)
+    end)
 
     local rBox = Instance.new("TextBox")
     local gBox = Instance.new("TextBox")
@@ -84,7 +96,7 @@ local function createColorPicker(config, parent, headerColor)
 
     for i, box in ipairs(boxes) do
         box.Size = UDim2.new(0, 40, 1, 0)
-        box.Position = UDim2.new(0, baseOffset + (i - 1) * spacing, 0, 0)
+        box.Position = UDim2.new(0, (i - 1) * spacing, 0, 0)
         box.PlaceholderText = ({"R", "G", "B"})[i]
         box.Text = ""
         box.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
@@ -93,8 +105,8 @@ local function createColorPicker(config, parent, headerColor)
         box.Font = Enum.Font.Code
         box.TextSize = 16
         box.BorderSizePixel = 0
-        box.Visible = false
-        box.Parent = btn
+        box.Visible = true
+        box.Parent = expansion
 
         box.FocusLost:Connect(function()
             local r = tonumber(rBox.Text) or 0
@@ -110,7 +122,7 @@ local function createColorPicker(config, parent, headerColor)
     end
 
     cycleToggle.Size = UDim2.new(0, 50, 1, 0)
-    cycleToggle.Position = UDim2.new(0, baseOffset + (#boxes) * spacing, 0, 0)
+    cycleToggle.Position = UDim2.new(0, (#boxes) * spacing, 0, 0)
     cycleToggle.Text = "Cycle"
     cycleToggle.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     cycleToggle.BackgroundTransparency = 0.3
@@ -118,8 +130,8 @@ local function createColorPicker(config, parent, headerColor)
     cycleToggle.Font = Enum.Font.Code
     cycleToggle.TextSize = 16
     cycleToggle.BorderSizePixel = 0
-    cycleToggle.Visible = false
-    cycleToggle.Parent = btn
+    cycleToggle.Visible = true
+    cycleToggle.Parent = expansion
 
     cycleToggle.MouseButton1Click:Connect(function()
         cycling = not cycling
@@ -154,11 +166,7 @@ local function createColorPicker(config, parent, headerColor)
 
     btn.MouseButton1Click:Connect(function()
         expanded = not expanded
-        btn.Text = expanded and "" or config.Text
-        for _, box in ipairs(boxes) do
-            box.Visible = expanded
-        end
-        cycleToggle.Visible = expanded
+        expansion.Visible = expanded
         btn.BackgroundColor3 = expanded and headerColor or Color3.fromRGB(40, 40, 40)
     end)
 
