@@ -204,7 +204,8 @@ local function createSlider(config, parent, tab)
     local min = config.Min or 0
     local max = config.Max or 100
     local value = config.Value or min
-    local precision = config.Precise or 1
+    local precise = config.Precise == true
+    local step = precise and 0.1 or 1
 
     local sliderBar = Instance.new("Frame")
     sliderBar.Size = UDim2.new(1, -20, 0, 6)
@@ -236,7 +237,7 @@ local function createSlider(config, parent, tab)
         local percent = (value - min) / (max - min)
         local width = percent * sliderBar.AbsoluteSize.X
         fill.Size = UDim2.new(0, width, 1, 0)
-        valueLabel.Text = tostring(math.floor(value * 10^precision) / 10^precision)
+        valueLabel.Text = precise and string.format("%.1f", value) or tostring(math.floor(value))
     end
 
     sliderBar.InputBegan:Connect(function(input)
@@ -256,7 +257,7 @@ local function createSlider(config, parent, tab)
             local rel = input.Position.X - sliderBar.AbsolutePosition.X
             local percent = math.clamp(rel / sliderBar.AbsoluteSize.X, 0, 1)
             value = min + (max - min) * percent
-            value = tonumber(string.format("%." .. precision .. "f", value))
+            value = math.floor(value / step + 0.5) * step
             updateVisual()
             if config.Function then
                 config.Function(value)
