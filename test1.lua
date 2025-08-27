@@ -22,20 +22,16 @@ local function createBaseElement(config, parent, tab)
     button.AutoButtonColor = false
     button.Parent = parent
 
-    -- Dynamic highlight color
-    local function updateHighlight()
-        local color = tab._Color
-        button.MouseEnter:Connect(function()
-            TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = color}):Play()
-        end)
-        button.MouseLeave:Connect(function()
-            if not button:GetAttribute("Active") then
-                TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40, 40, 40)}):Play()
-            end
-        end)
-    end
+    button:SetAttribute("Active", false)
 
-    updateHighlight()
+    RunService.RenderStepped:Connect(function()
+        if not button:GetAttribute("Active") and button:IsHovered() then
+            button.BackgroundColor3 = tab._Color
+        elseif not button:GetAttribute("Active") then
+            button.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        end
+    end)
+
     return button
 end
 
@@ -44,11 +40,10 @@ local function createButton(config, parent, tab)
 
     btn.MouseButton1Click:Connect(function()
         btn:SetAttribute("Active", true)
-        TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundColor3 = tab._Color}):Play()
+        btn.BackgroundColor3 = tab._Color
         if config.Function then config.Function() end
         wait(0.1)
         btn:SetAttribute("Active", false)
-        TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40, 40, 40)}):Play()
     end)
 
     return btn
@@ -59,16 +54,6 @@ local function createToggle(config, parent, tab)
     local btn = createBaseElement(config, parent, tab)
     btn.BackgroundColor3 = state and tab._Color or Color3.fromRGB(40, 40, 40)
 
-    btn.MouseEnter:Connect(function()
-        if not state then
-            TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = tab._Color}):Play()
-        end
-    end)
-    btn.MouseLeave:Connect(function()
-        if not state then
-            TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40, 40, 40)}):Play()
-        end
-    end)
     btn.MouseButton1Click:Connect(function()
         state = not state
         btn.BackgroundColor3 = state and tab._Color or Color3.fromRGB(40, 40, 40)
@@ -131,6 +116,7 @@ local function createColorPicker(config, parent, tab)
             tab._Header.BackgroundColor3 = newColor
             expansion.BackgroundColor3 = newColor
             btn.BackgroundColor3 = newColor
+            cycleToggle.BackgroundColor3 = newColor
             if config.Function then
                 config.Function(newColor)
             end
@@ -151,24 +137,33 @@ local function createColorPicker(config, parent, tab)
 
     cycleToggle.MouseButton1Click:Connect(function()
         cycling = not cycling
-        cycleToggle.BackgroundColor3 = cycling and tab._Color or Color3.fromRGB(30, 30, 30)
+    end)
+
+    cycleToggle:SetAttribute("Active", false)
+    cycleToggle.MouseButton1Click:Connect(function()
+        cycleToggle:SetAttribute("Active", true)
+        wait(0.1)
+        cycleToggle:SetAttribute("Active", false)
     end)
 
     RunService.RenderStepped:Connect(function()
         if cycling then
             hue = (hue + 0.005) % 1
             local color = Color3.fromHSV(hue, 1, 1)
-            local r, g, b = math.floor(color.R * 255), math.floor(color.G * 255), math.floor(color.B * 255)
-            rBox.Text = tostring(r)
-            gBox.Text = tostring(g)
-            bBox.Text = tostring(b)
             tab._Color = color
             tab._Header.BackgroundColor3 = color
             expansion.BackgroundColor3 = color
             btn.BackgroundColor3 = color
+            cycleToggle.BackgroundColor3 = color
             if config.Function then
                 config.Function(color)
             end
+        end
+
+        if not cycleToggle:GetAttribute("Active") and cycleToggle:IsHovered() then
+            cycleToggle.BackgroundColor3 = tab._Color
+        elseif not cycleToggle:GetAttribute("Active") and not cycling then
+            cycleToggle.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
         end
     end)
 
@@ -219,7 +214,7 @@ local function createSlider(config, parent, tab)
 
     local valueLabel = Instance.new("TextLabel")
     valueLabel.Size = UDim2.new(1, -20, 0, 16)
-    valueLabel.Position = UDim2.new(0, 10, 0, -18)
+    valueLabel.Position = UDim2.new(0, 10, 0.5, -8) -- centered on slider
     valueLabel.TextColor3 = Color3.new(1, 1, 1)
     valueLabel.BackgroundTransparency = 1
     valueLabel.Font = Enum.Font.Code
@@ -372,4 +367,3 @@ end
 return {
     CreateTab = CreateTab
 }
-
