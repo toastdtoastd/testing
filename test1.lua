@@ -9,16 +9,11 @@ screenGui.ResetOnSpawn = false
 screenGui.IgnoreGuiInset = true
 screenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
 
-local function trackHover(button, tab)
+local function trackHover(button)
     local hovered = false
     button.MouseEnter:Connect(function() hovered = true end)
     button.MouseLeave:Connect(function() hovered = false end)
-
-    RunService.RenderStepped:Connect(function()
-        if not button:GetAttribute("Active") then
-            button.BackgroundColor3 = hovered and tab._Color or Color3.fromRGB(40, 40, 40)
-        end
-    end)
+    return function() return hovered end
 end
 
 local function createBaseElement(config, parent, tab)
@@ -34,13 +29,19 @@ local function createBaseElement(config, parent, tab)
     button.AutoButtonColor = false
     button.Parent = parent
     button:SetAttribute("Active", false)
-
-    trackHover(button, tab)
     return button
 end
 
 local function createButton(config, parent, tab)
     local btn = createBaseElement(config, parent, tab)
+    local isHovered = trackHover(btn)
+
+    RunService.RenderStepped:Connect(function()
+        if not btn:GetAttribute("Active") then
+            btn.BackgroundColor3 = isHovered() and tab._Color or Color3.fromRGB(40, 40, 40)
+        end
+    end)
+
     btn.MouseButton1Click:Connect(function()
         btn:SetAttribute("Active", true)
         btn.BackgroundColor3 = tab._Color
@@ -48,28 +49,26 @@ local function createButton(config, parent, tab)
         wait(0.1)
         btn:SetAttribute("Active", false)
     end)
+
     return btn
 end
 
 local function createToggle(config, parent, tab)
     local state = config.State or false
     local btn = createBaseElement(config, parent, tab)
-    local hovered = false
-
-    btn.MouseEnter:Connect(function() hovered = true end)
-    btn.MouseLeave:Connect(function() hovered = false end)
-
-    btn.MouseButton1Click:Connect(function()
-        state = not state
-        if config.Function then config.Function(state) end
-    end)
+    local isHovered = trackHover(btn)
 
     RunService.RenderStepped:Connect(function()
         if state then
             btn.BackgroundColor3 = tab._Color
         else
-            btn.BackgroundColor3 = hovered and tab._Color or Color3.fromRGB(40, 40, 40)
+            btn.BackgroundColor3 = isHovered() and tab._Color or Color3.fromRGB(40, 40, 40)
         end
+    end)
+
+    btn.MouseButton1Click:Connect(function()
+        state = not state
+        if config.Function then config.Function(state) end
     end)
 
     return btn
@@ -221,7 +220,7 @@ local function createSlider(config, parent, tab)
 
     local valueLabel = Instance.new("TextLabel")
     valueLabel.Size = UDim2.new(0, 50, 0, 16)
-    valueLabel.Position = UDim2.new(1, 10, 0.5, -8) -- right of slider
+    valueLabel.Position = UDim2.new(1, 10, 0.5, -8)
     valueLabel.TextColor3 = Color3.new(1, 1, 1)
     valueLabel.BackgroundTransparency = 1
     valueLabel.Font = Enum.Font.Code
