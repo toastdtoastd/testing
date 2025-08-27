@@ -66,6 +66,52 @@ local function createToggle(config, parent, headerColor)
     return btn
 end
 
+local function createColorPicker(config, parent, headerColor)
+    local btn = createBaseElement(config, parent, headerColor)
+    local expanded = false
+
+    local rBox = Instance.new("TextBox")
+    local gBox = Instance.new("TextBox")
+    local bBox = Instance.new("TextBox")
+    local boxes = {rBox, gBox, bBox}
+
+    for i, box in ipairs(boxes) do
+        box.Size = UDim2.new(0, 40, 1, 0)
+        box.Position = UDim2.new(0, 205 + (i - 1) * 45, 0, 0)
+        box.PlaceholderText = ({"R", "G", "B"})[i]
+        box.Text = ""
+        box.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+        box.BackgroundTransparency = 0.3
+        box.TextColor3 = Color3.new(1, 1, 1)
+        box.Font = Enum.Font.Code
+        box.TextSize = 16
+        box.BorderSizePixel = 0
+        box.Visible = false
+        box.Parent = btn
+
+        box.FocusLost:Connect(function()
+            local r = tonumber(rBox.Text) or 0
+            local g = tonumber(gBox.Text) or 0
+            local b = tonumber(bBox.Text) or 0
+            r = math.clamp(r, 0, 255)
+            g = math.clamp(g, 0, 255)
+            b = math.clamp(b, 0, 255)
+            if config.Function then
+                config.Function(Color3.fromRGB(r, g, b))
+            end
+        end)
+    end
+
+    btn.MouseButton1Click:Connect(function()
+        expanded = not expanded
+        for _, box in ipairs(boxes) do
+            box.Visible = expanded
+        end
+    end)
+
+    return btn
+end
+
 local function CreateTab(config)
     local color = Color3.fromRGB(unpack(config.Color))
     local pos = UDim2.new(0, config.Pos[1], 0, config.Pos[2])
@@ -96,7 +142,7 @@ local function CreateTab(config)
     local minimize = Instance.new("TextButton")
     minimize.Size = UDim2.new(0, 30, 1, 0)
     minimize.Position = UDim2.new(1, -30, 0, 0)
-    minimize.Text = "-"
+    minimize.Text = "▼"
     minimize.BackgroundTransparency = 1
     minimize.TextColor3 = Color3.new(0, 0, 0)
     minimize.Font = Enum.Font.Code
@@ -120,7 +166,7 @@ local function CreateTab(config)
     minimize.MouseButton1Click:Connect(function()
         minimized = not minimized
         body.Visible = not minimized
-        minimize.Text = minimized and "+" or "-"
+        minimize.Text = minimized and "▶" or "▼"
     end)
 
     local dragging, offset
@@ -149,6 +195,10 @@ local function CreateTab(config)
 
     function tab:AddToggle(cfg)
         return createToggle(cfg, body, color)
+    end
+
+    function tab:AddColorPicker(cfg)
+        return createColorPicker(cfg, body, color)
     end
 
     return tab
