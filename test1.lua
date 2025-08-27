@@ -1,6 +1,7 @@
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "MeteorUILib"
@@ -69,15 +70,18 @@ end
 local function createColorPicker(config, parent, headerColor)
     local btn = createBaseElement(config, parent, headerColor)
     local expanded = false
+    local cycling = false
+    local hue = 0
 
     local rBox = Instance.new("TextBox")
     local gBox = Instance.new("TextBox")
     local bBox = Instance.new("TextBox")
+    local cycleToggle = Instance.new("TextButton")
     local boxes = {rBox, gBox, bBox}
 
     for i, box in ipairs(boxes) do
         box.Size = UDim2.new(0, 40, 1, 0)
-        box.Position = UDim2.new(0, 205 + (i - 1) * 45, 0, 0)
+        box.Position = UDim2.new(0, 245 + (i - 1) * 45, 0, 0)
         box.PlaceholderText = ({"R", "G", "B"})[i]
         box.Text = ""
         box.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
@@ -102,11 +106,56 @@ local function createColorPicker(config, parent, headerColor)
         end)
     end
 
+    cycleToggle.Size = UDim2.new(0, 50, 1, 0)
+    cycleToggle.Position = UDim2.new(0, 390, 0, 0)
+    cycleToggle.Text = "Cycle"
+    cycleToggle.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    cycleToggle.BackgroundTransparency = 0.3
+    cycleToggle.TextColor3 = Color3.new(1, 1, 1)
+    cycleToggle.Font = Enum.Font.Code
+    cycleToggle.TextSize = 16
+    cycleToggle.BorderSizePixel = 0
+    cycleToggle.Visible = false
+    cycleToggle.Parent = btn
+
+    cycleToggle.MouseButton1Click:Connect(function()
+        cycling = not cycling
+        cycleToggle.BackgroundColor3 = cycling and headerColor or Color3.fromRGB(30, 30, 30)
+    end)
+
+    RunService.RenderStepped:Connect(function()
+        if cycling then
+            hue = (hue + 0.005) % 1
+            local color = Color3.fromHSV(hue, 1, 1)
+            local r, g, b = math.floor(color.R * 255), math.floor(color.G * 255), math.floor(color.B * 255)
+            rBox.Text = tostring(r)
+            gBox.Text = tostring(g)
+            bBox.Text = tostring(b)
+            if config.Function then
+                config.Function(color)
+            end
+        end
+    end)
+
+    btn.MouseEnter:Connect(function()
+        if not expanded then
+            TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = headerColor}):Play()
+        end
+    end)
+
+    btn.MouseLeave:Connect(function()
+        if not expanded then
+            TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40, 40, 40)}):Play()
+        end
+    end)
+
     btn.MouseButton1Click:Connect(function()
         expanded = not expanded
         for _, box in ipairs(boxes) do
             box.Visible = expanded
         end
+        cycleToggle.Visible = expanded
+        btn.BackgroundColor3 = expanded and headerColor or Color3.fromRGB(40, 40, 40)
     end)
 
     return btn
@@ -207,3 +256,8 @@ end
 return {
     CreateTab = CreateTab
 }
+
+
+
+
+
