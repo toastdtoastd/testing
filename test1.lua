@@ -9,6 +9,18 @@ screenGui.ResetOnSpawn = false
 screenGui.IgnoreGuiInset = true
 screenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
 
+local function trackHover(button, tab)
+    local hovered = false
+    button.MouseEnter:Connect(function() hovered = true end)
+    button.MouseLeave:Connect(function() hovered = false end)
+
+    RunService.RenderStepped:Connect(function()
+        if not button:GetAttribute("Active") then
+            button.BackgroundColor3 = hovered and tab._Color or Color3.fromRGB(40, 40, 40)
+        end
+    end)
+end
+
 local function createBaseElement(config, parent, tab)
     local button = Instance.new("TextButton")
     button.Size = UDim2.new(1, 0, 0, 24)
@@ -21,23 +33,14 @@ local function createBaseElement(config, parent, tab)
     button.BorderSizePixel = 0
     button.AutoButtonColor = false
     button.Parent = parent
-
     button:SetAttribute("Active", false)
 
-    RunService.RenderStepped:Connect(function()
-        if not button:GetAttribute("Active") and button:IsHovered() then
-            button.BackgroundColor3 = tab._Color
-        elseif not button:GetAttribute("Active") then
-            button.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-        end
-    end)
-
+    trackHover(button, tab)
     return button
 end
 
 local function createButton(config, parent, tab)
     local btn = createBaseElement(config, parent, tab)
-
     btn.MouseButton1Click:Connect(function()
         btn:SetAttribute("Active", true)
         btn.BackgroundColor3 = tab._Color
@@ -45,7 +48,6 @@ local function createButton(config, parent, tab)
         wait(0.1)
         btn:SetAttribute("Active", false)
     end)
-
     return btn
 end
 
@@ -135,15 +137,12 @@ local function createColorPicker(config, parent, tab)
     cycleToggle.Visible = true
     cycleToggle.Parent = expansion
 
+    local hovered = false
+    cycleToggle.MouseEnter:Connect(function() hovered = true end)
+    cycleToggle.MouseLeave:Connect(function() hovered = false end)
+
     cycleToggle.MouseButton1Click:Connect(function()
         cycling = not cycling
-    end)
-
-    cycleToggle:SetAttribute("Active", false)
-    cycleToggle.MouseButton1Click:Connect(function()
-        cycleToggle:SetAttribute("Active", true)
-        wait(0.1)
-        cycleToggle:SetAttribute("Active", false)
     end)
 
     RunService.RenderStepped:Connect(function()
@@ -160,10 +159,8 @@ local function createColorPicker(config, parent, tab)
             end
         end
 
-        if not cycleToggle:GetAttribute("Active") and cycleToggle:IsHovered() then
-            cycleToggle.BackgroundColor3 = tab._Color
-        elseif not cycleToggle:GetAttribute("Active") and not cycling then
-            cycleToggle.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+        if not cycling then
+            cycleToggle.BackgroundColor3 = hovered and tab._Color or Color3.fromRGB(30, 30, 30)
         end
     end)
 
@@ -213,14 +210,14 @@ local function createSlider(config, parent, tab)
     fill.Parent = sliderBar
 
     local valueLabel = Instance.new("TextLabel")
-    valueLabel.Size = UDim2.new(1, -20, 0, 16)
-    valueLabel.Position = UDim2.new(0, 10, 0.5, -8) -- centered on slider
+    valueLabel.Size = UDim2.new(0, 50, 0, 16)
+    valueLabel.Position = UDim2.new(1, 10, 0.5, -8) -- right of slider
     valueLabel.TextColor3 = Color3.new(1, 1, 1)
     valueLabel.BackgroundTransparency = 1
     valueLabel.Font = Enum.Font.Code
     valueLabel.TextSize = 16
-    valueLabel.TextXAlignment = Enum.TextXAlignment.Center
-    valueLabel.Parent = expansion
+    valueLabel.TextXAlignment = Enum.TextXAlignment.Left
+    valueLabel.Parent = sliderBar
 
     local dragging = false
 
@@ -254,6 +251,10 @@ local function createSlider(config, parent, tab)
                 config.Function(value)
             end
         end
+    end)
+
+    RunService.RenderStepped:Connect(function()
+        expansion.BackgroundColor3 = tab._Color
     end)
 
     btn.MouseButton1Click:Connect(function()
