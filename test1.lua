@@ -70,6 +70,7 @@ local function createToggle(config, parent, tab)
     return btn
 end
 
+-- Color Picker
 local function createColorPicker(config, parent, tab)
     local btn = createBaseElement(config, parent, tab)
     local isHovered = trackHover(btn)
@@ -160,6 +161,7 @@ local function createColorPicker(config, parent, tab)
     return btn
 end
 
+-- Slider
 local function createSlider(config, parent, tab)
     local btn = createBaseElement(config, parent, tab)
     local isHovered = trackHover(btn)
@@ -250,6 +252,7 @@ local function createSlider(config, parent, tab)
     return btn
 end
 
+-- SliderToggle
 local function createSliderToggle(config, parent, tab)
     local state = config.State or false
     local value = config.Value or 0
@@ -276,9 +279,76 @@ local function createSliderToggle(config, parent, tab)
     local max = config.Max or 100
 
     local sliderBar = Instance.new("Frame")
-    sliderBar.Size = UDim2.new(1, -20, 
+    sliderBar.Size = UDim2.new(1, -20, 0, 6)
+    sliderBar.Position = UDim2.new(0, 10, 0.5, -3)
+    sliderBar.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    sliderBar.BorderSizePixel = 0
+    sliderBar.Parent = expansion
 
-    local function CreateTab(config)
+    local fill = Instance.new("Frame")
+    fill.Size = UDim2.new(0, 0, 1, 0)
+    fill.Position = UDim2.new(0, 0, 0, 0)
+    fill.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+    fill.BorderSizePixel = 0
+    fill.Parent = sliderBar
+
+    local valueLabel = Instance.new("TextLabel")
+    valueLabel.Size = UDim2.new(0, 50, 0, 16)
+    valueLabel.Position = UDim2.new(1, 10, 0.5, -8)
+    valueLabel.TextColor3 = Color3.new(1, 1, 1)
+    valueLabel.BackgroundTransparency = 1
+    valueLabel.Font = Enum.Font.Code
+    valueLabel.TextSize = 16
+    valueLabel.TextXAlignment = Enum.TextXAlignment.Left
+    valueLabel.Parent = sliderBar
+
+    local dragging = false
+
+    local function updateVisual()
+        local percent = (value - min) / (max - min)
+        local width = percent * sliderBar.AbsoluteSize.X
+        fill.Size = UDim2.new(0, width, 1, 0)
+        valueLabel.Text = precise and string.format("%.1f", value) or tostring(math.floor(value))
+    end
+
+    sliderBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end
+    end)
+
+    sliderBar.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local rel = input.Position.X - sliderBar.AbsolutePosition.X
+            local percent = math.clamp(rel / sliderBar.AbsoluteSize.X, 0, 1)
+            value = min + (max - min) * percent
+            value = math.floor(value / step + 0.5) * step
+            updateVisual()
+            if config.Function then config.Function(state, value) end
+        end
+    end)
+
+    btn.MouseButton1Click:Connect(function()
+        state = not state
+        if config.Function then config.Function(state, value) end
+    end)
+
+    btn.MouseButton2Click:Connect(function()
+        expansion.Visible = not expansion.Visible
+        updateVisual()
+    end)
+
+    RunService.RenderStepped:Connect(function()
+        expansion.BackgroundColor3 = tab._Color
+        btn.BackgroundColor3 = state and tab._Color or (isHovered() and tab._Color or Color3.fromRGB(40, 40, 40))
+    end)
+
+    return btn
+end
+
+local function CreateTab(config)
     local color = Color3.fromRGB(unpack(config.Color))
     local pos = UDim2.new(0, config.Pos[1], 0, config.Pos[2])
     local width = config.Width or 200
