@@ -348,14 +348,15 @@ local function createSliderToggle(config, parent, tab)
     return btn
 end
 
--- ColorDropdown
-local function createColorDropdown(config, parent, tab)
+-- Dropdown
+local function createDropdown(config, parent, tab)
     local btn = createBaseElement(config, parent, tab)
     local isHovered = trackHover(btn)
     local toggled = false
 
+    local options = config.Options or {}
     local expansion = Instance.new("Frame")
-    expansion.Size = UDim2.new(0, 150, 0, 24 * #string.split(config.Options, ","))
+    expansion.Size = UDim2.new(0, 150, 0, 24 * #options)
     expansion.Position = UDim2.new(0, btn.Size.X.Offset, 0, 0)
     expansion.BackgroundColor3 = tab._Color
     expansion.BackgroundTransparency = 0.3
@@ -372,17 +373,38 @@ local function createColorDropdown(config, parent, tab)
     layout.Padding = UDim.new(0, 0)
     layout.Parent = expansion
 
-    for _, label in ipairs(string.split(config.Options, ",")) do
-        local sub = Instance.new("TextLabel")
+    local states = {}
+
+    for _, opt in ipairs(options) do
+        local label = typeof(opt) == "table" and opt.Text or tostring(opt)
+        local callback = typeof(opt) == "table" and opt.Function or nil
+
+        local sub = Instance.new("TextButton")
         sub.Size = UDim2.new(1, 0, 0, 24)
-        sub.Text = label:match("^%s*(.-)%s*$")
+        sub.Text = label
         sub.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
         sub.BackgroundTransparency = 0.3
         sub.TextColor3 = Color3.new(1, 1, 1)
         sub.Font = Enum.Font.Code
         sub.TextSize = 16
         sub.BorderSizePixel = 0
+        sub.AutoButtonColor = false
         sub.Parent = expansion
+
+        local hovered = false
+        sub.MouseEnter:Connect(function() hovered = true end)
+        sub.MouseLeave:Connect(function() hovered = false end)
+
+        states[label] = false
+
+        sub.MouseButton1Click:Connect(function()
+            states[label] = not states[label]
+            if callback then callback(states[label]) end
+        end)
+
+        RunService.RenderStepped:Connect(function()
+            sub.BackgroundColor3 = states[label] and tab._Color or (hovered and tab._Color or Color3.fromRGB(40, 40, 40))
+        end)
     end
 
     btn.MouseButton1Click:Connect(function()
@@ -497,8 +519,8 @@ local function CreateTab(config)
         return createSliderToggle(cfg, body, tab)
     end
 
-    function tab:AddColorDropdown(cfg)
-        return createColorDropdown(cfg, body, tab)
+    function tab:AddDropdown(cfg)
+        return createDropdown(cfg, body, tab)
     end
 
     return tab
@@ -507,4 +529,3 @@ end
 return {
     CreateTab = CreateTab
 }
-
