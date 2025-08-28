@@ -183,15 +183,14 @@ local function createColorPicker(config, parent, tab)
     return btn
 end
 
-local function createToggleWithSlider(config, parent, tab)
+local function createSliderToggle(config, parent, tab)
     local state = config.State or false
     local value = config.Value or 0
     local precise = config.Precise == true
     local step = precise and 0.1 or 1
-    local isHovered
 
     local btn = createBaseElement(config, parent, tab)
-    isHovered = trackHover(btn)
+    local isHovered = trackHover(btn)
 
     local expansion = Instance.new("Frame")
     expansion.Size = btn.Size
@@ -379,8 +378,8 @@ local function CreateTab(config)
         return createSlider(cfg, body, tab)
     end
 
-    function tab:AddToggleWithSlider(cfg)
-        return createToggleWithSlider(cfg, body, tab)
+    function tab:AddSliderToggle(cfg)
+        return createSliderToggle(cfg, body, tab)
     end
 
     return tab
