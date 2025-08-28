@@ -348,6 +348,56 @@ local function createSliderToggle(config, parent, tab)
     return btn
 end
 
+-- ColorDropdown
+local function createColorDropdown(config, parent, tab)
+    local btn = createBaseElement(config, parent, tab)
+    local isHovered = trackHover(btn)
+    local toggled = false
+
+    local expansion = Instance.new("Frame")
+    expansion.Size = UDim2.new(0, 150, 0, 24 * #string.split(config.Options, ","))
+    expansion.Position = UDim2.new(0, btn.Size.X.Offset, 0, 0)
+    expansion.BackgroundColor3 = tab._Color
+    expansion.BackgroundTransparency = 0.3
+    expansion.BorderSizePixel = 0
+    expansion.Visible = false
+    expansion.Parent = btn
+
+    btn:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+        expansion.Position = UDim2.new(0, btn.AbsoluteSize.X, 0, 0)
+    end)
+
+    local layout = Instance.new("UIListLayout")
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Padding = UDim.new(0, 0)
+    layout.Parent = expansion
+
+    for _, label in ipairs(string.split(config.Options, ",")) do
+        local sub = Instance.new("TextLabel")
+        sub.Size = UDim2.new(1, 0, 0, 24)
+        sub.Text = label:match("^%s*(.-)%s*$")
+        sub.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        sub.BackgroundTransparency = 0.3
+        sub.TextColor3 = Color3.new(1, 1, 1)
+        sub.Font = Enum.Font.Code
+        sub.TextSize = 16
+        sub.BorderSizePixel = 0
+        sub.Parent = expansion
+    end
+
+    btn.MouseButton1Click:Connect(function()
+        toggled = not toggled
+        expansion.Visible = toggled
+    end)
+
+    RunService.RenderStepped:Connect(function()
+        btn.BackgroundColor3 = toggled and tab._Color or (isHovered() and tab._Color or Color3.fromRGB(40, 40, 40))
+        expansion.BackgroundColor3 = tab._Color
+    end)
+
+    return btn
+end
+
 local function CreateTab(config)
     local color = Color3.fromRGB(unpack(config.Color))
     local pos = UDim2.new(0, config.Pos[1], 0, config.Pos[2])
@@ -447,9 +497,14 @@ local function CreateTab(config)
         return createSliderToggle(cfg, body, tab)
     end
 
+    function tab:AddColorDropdown(cfg)
+        return createColorDropdown(cfg, body, tab)
+    end
+
     return tab
 end
 
 return {
     CreateTab = CreateTab
 }
+
