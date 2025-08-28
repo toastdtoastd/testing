@@ -183,10 +183,15 @@ local function createColorPicker(config, parent, tab)
     return btn
 end
 
-local function createSlider(config, parent, tab)
+local function createToggleWithSlider(config, parent, tab)
+    local state = config.State or false
+    local value = config.Value or 0
+    local precise = config.Precise == true
+    local step = precise and 0.1 or 1
+    local isHovered
+
     local btn = createBaseElement(config, parent, tab)
-    local isHovered = trackHover(btn)
-    local expanded = false
+    isHovered = trackHover(btn)
 
     local expansion = Instance.new("Frame")
     expansion.Size = btn.Size
@@ -203,9 +208,6 @@ local function createSlider(config, parent, tab)
 
     local min = config.Min or 0
     local max = config.Max or 100
-    local value = config.Value or min
-    local precise = config.Precise == true
-    local step = precise and 0.1 or 1
 
     local sliderBar = Instance.new("Frame")
     sliderBar.Size = UDim2.new(1, -20, 0, 6)
@@ -260,24 +262,23 @@ local function createSlider(config, parent, tab)
             value = math.floor(value / step + 0.5) * step
             updateVisual()
             if config.Function then
-                config.Function(value)
+                config.Function(state, value)
             end
         end
     end)
 
-    RunService.RenderStepped:Connect(function()
-        expansion.BackgroundColor3 = tab._Color
-        if not expanded then
-            btn.BackgroundColor3 = isHovered() and tab._Color or Color3.fromRGB(40, 40, 40)
-        else
-            btn.BackgroundColor3 = tab._Color
-        end
+    btn.MouseButton1Click:Connect(function()
+        state = not state
+        if config.Function then config.Function(state, value) end
     end)
 
-    btn.MouseButton1Click:Connect(function()
-        expanded = not expanded
-        expansion.Visible = expanded
-        updateVisual()
+    btn.MouseButton2Click:Connect(function()
+        expansion.Visible = not expansion.Visible
+    end)
+
+    RunService.RenderStepped:Connect(function()
+        expansion.BackgroundColor3 = tab._Color
+        btn.BackgroundColor3 = state and tab._Color or (isHovered() and tab._Color or Color3.fromRGB(40, 40, 40))
     end)
 
     return btn
@@ -376,6 +377,10 @@ local function CreateTab(config)
 
     function tab:AddSlider(cfg)
         return createSlider(cfg, body, tab)
+    end
+
+    function tab:AddToggleWithSlider(cfg)
+        return createToggleWithSlider(cfg, body, tab)
     end
 
     return tab
