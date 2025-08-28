@@ -73,11 +73,7 @@ end
 local function createColorPicker(config, parent, tab)
     local btn = createBaseElement(config, parent, tab)
     local isHovered = trackHover(btn)
-    local expanded = false
-    local cycling = false
-    local hue = 0
-
-    local spacing = 45
+    local expanded, cycling, hue = false, false, 0
 
     local expansion = Instance.new("Frame")
     expansion.Size = btn.Size
@@ -92,11 +88,10 @@ local function createColorPicker(config, parent, tab)
         expansion.Position = UDim2.new(0, btn.AbsoluteSize.X, 0, 0)
     end)
 
-    local rBox = Instance.new("TextBox")
-    local gBox = Instance.new("TextBox")
-    local bBox = Instance.new("TextBox")
+    local rBox, gBox, bBox = Instance.new("TextBox"), Instance.new("TextBox"), Instance.new("TextBox")
     local cycleToggle = Instance.new("TextButton")
     local boxes = {rBox, gBox, bBox}
+    local spacing = 45
 
     for i, box in ipairs(boxes) do
         box.Size = UDim2.new(0, 40, 1, 0)
@@ -109,25 +104,19 @@ local function createColorPicker(config, parent, tab)
         box.Font = Enum.Font.Code
         box.TextSize = 16
         box.BorderSizePixel = 0
-        box.Visible = true
         box.Parent = expansion
 
         box.FocusLost:Connect(function()
             local r = tonumber(rBox.Text) or 0
             local g = tonumber(gBox.Text) or 0
             local b = tonumber(bBox.Text) or 0
-            r = math.clamp(r, 0, 255)
-            g = math.clamp(g, 0, 255)
-            b = math.clamp(b, 0, 255)
-            local newColor = Color3.fromRGB(r, g, b)
+            local newColor = Color3.fromRGB(math.clamp(r, 0, 255), math.clamp(g, 0, 255), math.clamp(b, 0, 255))
             tab._Color = newColor
             tab._Header.BackgroundColor3 = newColor
             expansion.BackgroundColor3 = newColor
             btn.BackgroundColor3 = newColor
             cycleToggle.BackgroundColor3 = newColor
-            if config.Function then
-                config.Function(newColor)
-            end
+            if config.Function then config.Function(newColor) end
         end)
     end
 
@@ -140,12 +129,7 @@ local function createColorPicker(config, parent, tab)
     cycleToggle.Font = Enum.Font.Code
     cycleToggle.TextSize = 16
     cycleToggle.BorderSizePixel = 0
-    cycleToggle.Visible = true
     cycleToggle.Parent = expansion
-
-    local hovered = false
-    cycleToggle.MouseEnter:Connect(function() hovered = true end)
-    cycleToggle.MouseLeave:Connect(function() hovered = false end)
 
     cycleToggle.MouseButton1Click:Connect(function()
         cycling = not cycling
@@ -160,17 +144,10 @@ local function createColorPicker(config, parent, tab)
             expansion.BackgroundColor3 = color
             btn.BackgroundColor3 = color
             cycleToggle.BackgroundColor3 = color
-            if config.Function then
-                config.Function(color)
-            end
+            if config.Function then config.Function(color) end
         end
-
         if not expanded then
             btn.BackgroundColor3 = isHovered() and tab._Color or Color3.fromRGB(40, 40, 40)
-        end
-
-        if not cycling then
-            cycleToggle.BackgroundColor3 = hovered and tab._Color or Color3.fromRGB(30, 30, 30)
         end
     end)
 
@@ -241,15 +218,11 @@ local function createSlider(config, parent, tab)
     end
 
     sliderBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-        end
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end
     end)
 
     sliderBar.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
     end)
 
     UserInputService.InputChanged:Connect(function(input)
@@ -259,9 +232,7 @@ local function createSlider(config, parent, tab)
             value = min + (max - min) * percent
             value = math.floor(value / step + 0.5) * step
             updateVisual()
-            if config.Function then
-                config.Function(value)
-            end
+            if config.Function then config.Function(value) end
         end
     end)
 
@@ -297,7 +268,15 @@ local function createSliderToggle(config, parent, tab)
     expansion.Visible = false
     expansion.Parent = btn
 
-    btn:GetProperty
+    btn:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+        expansion.Position = UDim2.new(0, btn.AbsoluteSize.X, 0, 0)
+    end)
+
+    local min = config.Min or 0
+    local max = config.Max or 100
+
+    local sliderBar = Instance.new("Frame")
+    sliderBar.Size = UDim2.new(1, -20, 
 
     local function CreateTab(config)
     local color = Color3.fromRGB(unpack(config.Color))
@@ -404,4 +383,3 @@ end
 return {
     CreateTab = CreateTab
 }
-
