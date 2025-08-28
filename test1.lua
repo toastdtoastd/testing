@@ -183,14 +183,13 @@ local function createColorPicker(config, parent, tab)
     return btn
 end
 
-local function createSliderToggle(config, parent, tab)
-    local state = config.State or false
+local function createSlider(config, parent, tab)
+    local btn = createBaseElement(config, parent, tab)
+    local isHovered = trackHover(btn)
+    local expanded = false
     local value = config.Value or 0
     local precise = config.Precise == true
     local step = precise and 0.1 or 1
-
-    local btn = createBaseElement(config, parent, tab)
-    local isHovered = trackHover(btn)
 
     local expansion = Instance.new("Frame")
     expansion.Size = btn.Size
@@ -261,29 +260,46 @@ local function createSliderToggle(config, parent, tab)
             value = math.floor(value / step + 0.5) * step
             updateVisual()
             if config.Function then
-                config.Function(state, value)
+                config.Function(value)
             end
         end
     end)
 
     btn.MouseButton1Click:Connect(function()
-        state = not state
-        if config.Function then config.Function(state, value) end
-    end)
-
-    btn.MouseButton2Click:Connect(function()
-        expansion.Visible = not expansion.Visible
+        expanded = not expanded
+        expansion.Visible = expanded
+        updateVisual()
     end)
 
     RunService.RenderStepped:Connect(function()
         expansion.BackgroundColor3 = tab._Color
-        btn.BackgroundColor3 = state and tab._Color or (isHovered() and tab._Color or Color3.fromRGB(40, 40, 40))
+        btn.BackgroundColor3 = expanded and tab._Color or (isHovered() and tab._Color or Color3.fromRGB(40, 40, 40))
     end)
 
     return btn
 end
 
-local function CreateTab(config)
+local function createSliderToggle(config, parent, tab)
+    local state = config.State or false
+    local value = config.Value or 0
+    local precise = config.Precise == true
+    local step = precise and 0.1 or 1
+
+    local btn = createBaseElement(config, parent, tab)
+    local isHovered = trackHover(btn)
+
+    local expansion = Instance.new("Frame")
+    expansion.Size = btn.Size
+    expansion.Position = UDim2.new(0, btn.Size.X.Offset, 0, 0)
+    expansion.BackgroundColor3 = tab._Color
+    expansion.BackgroundTransparency = 0.3
+    expansion.BorderSizePixel = 0
+    expansion.Visible = false
+    expansion.Parent = btn
+
+    btn:GetProperty
+
+    local function CreateTab(config)
     local color = Color3.fromRGB(unpack(config.Color))
     local pos = UDim2.new(0, config.Pos[1], 0, config.Pos[2])
     local width = config.Width or 200
@@ -388,3 +404,4 @@ end
 return {
     CreateTab = CreateTab
 }
+
