@@ -13,6 +13,7 @@ local backgroundTransparency = 0.3
 local highlightsEnabled = true
 local currentColor = Color3.fromRGB(255, 255, 255)
 local allTabs = {}
+local allColorPickers = {}
 
 local function trackHover(button)
     local hovered = false
@@ -81,9 +82,12 @@ end
 local function createColorPicker(config, parent, tab)
     local btn = createBaseElement(config, parent, tab)
     local isHovered = trackHover(btn)
-    local expanded, cycling, hue = false, false, 0
-
+    local expanded = false
+    local localColor = currentColor
+    local cycleToggle = Instance.new("TextButton")
+    local rBox, gBox, bBox = Instance.new("TextBox"), Instance.new("TextBox"), Instance.new("TextBox")
     local expansion = Instance.new("Frame")
+
     expansion.Size = btn.Size
     expansion.Position = UDim2.new(0, btn.Size.X.Offset, 0, 0)
     expansion.BackgroundColor3 = tab._Color
@@ -96,8 +100,6 @@ local function createColorPicker(config, parent, tab)
         expansion.Position = UDim2.new(0, btn.AbsoluteSize.X, 0, 0)
     end)
 
-    local rBox, gBox, bBox = Instance.new("TextBox"), Instance.new("TextBox"), Instance.new("TextBox")
-    local cycleToggle = Instance.new("TextButton")
     local boxes = {rBox, gBox, bBox}
     local spacing = 45
 
@@ -119,11 +121,7 @@ local function createColorPicker(config, parent, tab)
             local g = tonumber(gBox.Text) or 0
             local b = tonumber(bBox.Text) or 0
             local newColor = Color3.fromRGB(math.clamp(r, 0, 255), math.clamp(g, 0, 255), math.clamp(b, 0, 255))
-            tab._Color = newColor
-            tab._Header.BackgroundColor3 = newColor
-            expansion.BackgroundColor3 = newColor
-            btn.BackgroundColor3 = newColor
-            cycleToggle.BackgroundColor3 = newColor
+            localColor = newColor
             if config.Function then config.Function(newColor) end
         end)
     end
@@ -140,23 +138,15 @@ local function createColorPicker(config, parent, tab)
     cycleToggle.Parent = expansion
 
     cycleToggle.MouseButton1Click:Connect(function()
-        cycling = not cycling
+        -- Only affects local colorpicker if desired
     end)
 
     RunService.RenderStepped:Connect(function()
-        if cycling then
-            hue = (hue + 0.005) % 1
-            local color = Color3.fromHSV(hue, 1, 1)
-            tab._Color = color
-            tab._Header.BackgroundColor3 = color
-            expansion.BackgroundColor3 = color
-            btn.BackgroundColor3 = color
-            cycleToggle.BackgroundColor3 = color
-            if config.Function then config.Function(color) end
-        end
-        local showHighlight = highlightsEnabled and isHovered()
-        btn.BackgroundColor3 = showHighlight and tab._Color or Color3.fromRGB(40, 40, 40)
-        btn.BackgroundTransparency = showHighlight and 0 or backgroundTransparency
+        -- Sync visuals with currentColor from Settings tab
+        btn.BackgroundColor3 = highlightsEnabled and isHovered() and currentColor or Color3.fromRGB(40, 40, 40)
+        btn.BackgroundTransparency = highlightsEnabled and isHovered() and 0 or backgroundTransparency
+        expansion.BackgroundColor3 = currentColor
+        cycleToggle.BackgroundColor3 = currentColor
     end)
 
     btn.MouseButton1Click:Connect(function()
@@ -164,6 +154,7 @@ local function createColorPicker(config, parent, tab)
         expansion.Visible = expanded
     end)
 
+    table.insert(allColorPickers, {Button = btn, Expansion = expansion, Cycle = cycleToggle})
     return btn
 end
 
@@ -251,10 +242,10 @@ local function createSlider(config, parent, tab)
     end)
 
     RunService.RenderStepped:Connect(function()
-        expansion.BackgroundColor3 = tab._Color
+        expansion.BackgroundColor3 = currentColor
         expansion.BackgroundTransparency = backgroundTransparency
         local showHighlight = highlightsEnabled and (expanded or isHovered())
-        btn.BackgroundColor3 = showHighlight and tab._Color or Color3.fromRGB(40, 40, 40)
+        btn.BackgroundColor3 = showHighlight and currentColor or Color3.fromRGB(40, 40, 40)
         btn.BackgroundTransparency = showHighlight and 0 or backgroundTransparency
     end)
 
@@ -274,7 +265,7 @@ local function createSliderToggle(config, parent, tab)
     local expansion = Instance.new("Frame")
     expansion.Size = btn.Size
     expansion.Position = UDim2.new(0, btn.Size.X.Offset, 0, 0)
-    expansion.BackgroundColor3 = tab._Color
+    expansion.BackgroundColor3 = currentColor
     expansion.BackgroundTransparency = backgroundTransparency
     expansion.BorderSizePixel = 0
     expansion.Visible = false
@@ -350,10 +341,10 @@ local function createSliderToggle(config, parent, tab)
     end)
 
     RunService.RenderStepped:Connect(function()
-        expansion.BackgroundColor3 = tab._Color
+        expansion.BackgroundColor3 = currentColor
         expansion.BackgroundTransparency = backgroundTransparency
         local showHighlight = highlightsEnabled and (state or isHovered())
-        btn.BackgroundColor3 = showHighlight and tab._Color or Color3.fromRGB(40, 40, 40)
+        btn.BackgroundColor3 = showHighlight and currentColor or Color3.fromRGB(40, 40, 40)
         btn.BackgroundTransparency = showHighlight and 0 or backgroundTransparency
     end)
 
@@ -370,7 +361,7 @@ local function createDropdown(config, parent, tab)
     local expansion = Instance.new("Frame")
     expansion.Size = UDim2.new(0, 150, 0, 24 * #options)
     expansion.Position = UDim2.new(0, btn.Size.X.Offset, 0, 0)
-    expansion.BackgroundColor3 = tab._Color
+    expansion.BackgroundColor3 = currentColor
     expansion.BackgroundTransparency = backgroundTransparency
     expansion.BorderSizePixel = 0
     expansion.Visible = false
@@ -416,7 +407,7 @@ local function createDropdown(config, parent, tab)
 
         RunService.RenderStepped:Connect(function()
             local showHighlight = highlightsEnabled and (states[label] or hovered)
-            sub.BackgroundColor3 = showHighlight and tab._Color or Color3.fromRGB(40, 40, 40)
+            sub.BackgroundColor3 = showHighlight and currentColor or Color3.fromRGB(40, 40, 40)
             sub.BackgroundTransparency = showHighlight and 0 or backgroundTransparency
         end)
     end
@@ -428,9 +419,9 @@ local function createDropdown(config, parent, tab)
 
     RunService.RenderStepped:Connect(function()
         local showHighlight = highlightsEnabled and (toggled or isHovered())
-        btn.BackgroundColor3 = showHighlight and tab._Color or Color3.fromRGB(40, 40, 40)
+        btn.BackgroundColor3 = showHighlight and currentColor or Color3.fromRGB(40, 40, 40)
         btn.BackgroundTransparency = showHighlight and 0 or backgroundTransparency
-        expansion.BackgroundColor3 = tab._Color
+        expansion.BackgroundColor3 = currentColor
         expansion.BackgroundTransparency = backgroundTransparency
     end)
 
@@ -552,6 +543,9 @@ local function CreateSettingsTab()
         Width = 220
     })
 
+    local hue = 0
+    local cycling = false
+
     tab:AddSlider({
         Text = "Background Transparency",
         Value = backgroundTransparency,
@@ -579,8 +573,37 @@ local function CreateSettingsTab()
                 t._Color = color
                 t._Header.BackgroundColor3 = color
             end
+            for _, cp in ipairs(allColorPickers) do
+                cp.Button.BackgroundColor3 = color
+                cp.Expansion.BackgroundColor3 = color
+                cp.Cycle.BackgroundColor3 = color
+            end
         end
     })
+
+    local cycleButton = tab:AddButton({
+        Text = "Cycle Tab Color",
+        Function = function()
+            cycling = not cycling
+        end
+    })
+
+    RunService.RenderStepped:Connect(function()
+        if cycling then
+            hue = (hue + 0.005) % 1
+            local color = Color3.fromHSV(hue, 1, 1)
+            currentColor = color
+            for _, t in ipairs(allTabs) do
+                t._Color = color
+                t._Header.BackgroundColor3 = color
+            end
+            for _, cp in ipairs(allColorPickers) do
+                cp.Button.BackgroundColor3 = color
+                cp.Expansion.BackgroundColor3 = color
+                cp.Cycle.BackgroundColor3 = color
+            end
+        end
+    end)
 
     return tab, function(registerTab)
         table.insert(allTabs, registerTab)
