@@ -452,7 +452,7 @@ local function CreateTab(config)
     minimize.Position = UDim2.new(1, -30, 0, 0)
     minimize.Text = "▼"
     minimize.BackgroundTransparency = 1
-    minimize.TextColor3 = Color3.new(0, 0, 0)
+    minimize.TextColor3 = Color3.new(1, 1, 1)
     minimize.Font = Enum.Font.Code
     minimize.TextSize = 18
     minimize.BorderSizePixel = 0
