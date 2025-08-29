@@ -14,7 +14,6 @@ local backgroundTransparency = 0.3
 local highlightsEnabled = true
 local currentColor = Color3.fromRGB(255, 255, 255)
 local allTabs = {}
-local allColorPickers = {}
 
 local function trackHover(button)
     local hovered = false
@@ -150,121 +149,24 @@ local function createColorPicker(config, parent, tab)
         local isActive = expanded or isHovered()
         local showHighlight = highlightsEnabled and isActive
 
-        if showHighlight then
-            btn.BackgroundColor3 = tab._Color
-            btn.BackgroundTransparency = 0
-        else
-            btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-            btn.BackgroundTransparency = 0 -- force opaque to block bleed
-        end
-
-        if expanded then
-            expansion.BackgroundColor3 = tab._Color
-            cycleToggle.BackgroundColor3 = tab._Color
-        end
-    end)
-
-    table.insert(allColorPickers, {Button = btn, Expansion = expansion, Cycle = cycleToggle})
-    return btn
-end
-
--- Slider
-local function createSlider(config, parent, tab)
-    local btn = createBaseElement(config, parent, tab)
-    local isHovered = trackHover(btn)
-    local expanded = false
-    local value = config.Value or 0
-    local precise = config.Precise == true
-    local step = precise and 0.1 or 1
-
-    local expansion = Instance.new("Frame")
-    expansion.Size = btn.Size
-    expansion.Position = UDim2.new(0, btn.Size.X.Offset, 0, 0)
-    expansion.BackgroundColor3 = tab._Color
-    expansion.BackgroundTransparency = backgroundTransparency
-    expansion.BorderSizePixel = 0
-    expansion.Visible = false
-    expansion.Parent = btn
-
-    btn:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
-        expansion.Position = UDim2.new(0, btn.AbsoluteSize.X, 0, 0)
-    end)
-
-    local min = config.Min or 0
-    local max = config.Max or 100
-
-    local sliderBar = Instance.new("Frame")
-    sliderBar.Size = UDim2.new(1, -20, 0, 6)
-    sliderBar.Position = UDim2.new(0, 10, 0.5, -3)
-    sliderBar.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    sliderBar.BorderSizePixel = 0
-    sliderBar.Parent = expansion
-
-    local fill = Instance.new("Frame")
-    fill.Size = UDim2.new(0, 0, 1, 0)
-    fill.Position = UDim2.new(0, 0, 0, 0)
-    fill.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
-    fill.BorderSizePixel = 0
-    fill.Parent = sliderBar
-
-    local valueLabel = Instance.new("TextLabel")
-    valueLabel.Size = UDim2.new(0, 50, 0, 16)
-    valueLabel.Position = UDim2.new(1, 10, 0.5, -8)
-    valueLabel.TextColor3 = Color3.new(1, 1, 1)
-    valueLabel.BackgroundTransparency = 1
-    valueLabel.Font = Enum.Font.Code
-    valueLabel.TextSize = 16
-    valueLabel.TextXAlignment = Enum.TextXAlignment.Left
-    valueLabel.Parent = sliderBar
-
-    local dragging = false
-
-    local function updateVisual()
-        local percent = (value - min) / (max - min)
-        local width = percent * sliderBar.AbsoluteSize.X
-        fill.Size = UDim2.new(0, width, 1, 0)
-        valueLabel.Text = precise and string.format("%.1f", value) or tostring(math.floor(value))
-    end
-
-    sliderBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end
-    end)
-
-    sliderBar.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            local rel = input.Position.X - sliderBar.AbsolutePosition.X
-            local percent = math.clamp(rel / sliderBar.AbsoluteSize.X, 0, 1)
-            value = min + (max - min) * percent
-            value = math.floor(value / step + 0.5) * step
-            updateVisual()
-            if config.Function then config.Function(value) end
-        end
-    end)
-
-    btn.MouseButton1Click:Connect(function()
-        expanded = not expanded
-        expansion.Visible = expanded
-        updateVisual()
-    end)
-
-    RunService.RenderStepped:Connect(function()
-        local showHighlight = highlightsEnabled and (expanded or isHovered())
         btn.BackgroundColor3 = showHighlight and tab._Color or Color3.fromRGB(40, 40, 40)
         btn.BackgroundTransparency = showHighlight and 0 or backgroundTransparency
 
         if expanded then
             expansion.BackgroundColor3 = tab._Color
+            expansion.BackgroundTransparency = backgroundTransparency
+            cycleToggle.BackgroundColor3 = tab._Color
+            cycleToggle.BackgroundTransparency = backgroundTransparency
         end
     end)
 
-    return btn
+    return {
+        Button = btn,
+        Expansion = expansion,
+        Cycle = cycleToggle
+    }
 end
 
--- SliderToggle
 local function createSliderToggle(config, parent, tab)
     local state = config.State or false
     local value = config.Value or 0
@@ -359,13 +261,13 @@ local function createSliderToggle(config, parent, tab)
 
         if expansion.Visible then
             expansion.BackgroundColor3 = tab._Color
+            expansion.BackgroundTransparency = backgroundTransparency
         end
     end)
 
     return btn
 end
 
--- Dropdown
 local function createDropdown(config, parent, tab)
     local btn = createBaseElement(config, parent, tab)
     local isHovered = trackHover(btn)
@@ -438,6 +340,7 @@ local function createDropdown(config, parent, tab)
 
         if toggled then
             expansion.BackgroundColor3 = tab._Color
+            expansion.BackgroundTransparency = backgroundTransparency
         end
     end)
 
@@ -545,6 +448,7 @@ local function Settings(config)
 
     local hue = 0
     local cycling = false
+    local settingsColorPicker = nil
 
     tab:AddSlider({
         Text = "Background Transparency",
@@ -565,18 +469,13 @@ local function Settings(config)
         end
     })
 
-    tab:AddColorPicker({
+    settingsColorPicker = tab:AddColorPicker({
         Text = "Tab Color",
         Function = function(color)
             currentColor = color
             for _, t in ipairs(allTabs) do
                 t._Color = color
                 t._Header.BackgroundColor3 = color
-            end
-            for _, cp in ipairs(allColorPickers) do
-                cp.Button.BackgroundColor3 = color
-                cp.Expansion.BackgroundColor3 = color
-                cp.Cycle.BackgroundColor3 = color
             end
         end,
         CycleFunction = function()
@@ -593,11 +492,11 @@ local function Settings(config)
                 t._Color = color
                 t._Header.BackgroundColor3 = color
             end
-            for _, cp in ipairs(allColorPickers) do
-                cp.Button.BackgroundColor3 = color
-                if cp.Expansion.Visible then
-                    cp.Expansion.BackgroundColor3 = color
-                    cp.Cycle.BackgroundColor3 = color
+            if settingsColorPicker then
+                settingsColorPicker.Button.BackgroundColor3 = color
+                if settingsColorPicker.Expansion.Visible then
+                    settingsColorPicker.Expansion.BackgroundColor3 = color
+                    settingsColorPicker.Cycle.BackgroundColor3 = color
                 end
             end
         end
