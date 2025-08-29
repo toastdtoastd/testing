@@ -148,15 +148,20 @@ local function createColorPicker(config, parent, tab)
     end)
 
 RunService.RenderStepped:Connect(function()
-    local showHighlight = highlightsEnabled and (expanded or isHovered())
+    local isActive = expanded or isHovered()
+    local showHighlight = highlightsEnabled and isActive
+
+    -- Only highlight the button if hovered or expanded
     btn.BackgroundColor3 = showHighlight and tab._Color or Color3.fromRGB(40, 40, 40)
     btn.BackgroundTransparency = showHighlight and 0 or backgroundTransparency
 
+    -- Only update expansion visuals if the panel is visible
     if expanded then
         expansion.BackgroundColor3 = tab._Color
         cycleToggle.BackgroundColor3 = tab._Color
     end
 end)
+
 
 
     table.insert(allColorPickers, {Button = btn, Expansion = expansion, Cycle = cycleToggle})
