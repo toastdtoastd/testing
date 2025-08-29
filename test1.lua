@@ -7,7 +7,7 @@ local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "MeteorUILib"
 screenGui.ResetOnSpawn = false
 screenGui.IgnoreGuiInset = true
-screenGui.DisplayOrder = 9999
+screenGui.DisplayOrder = 9999 -- ensures UI stays on top
 screenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
 
 local backgroundTransparency = 0.3
@@ -137,7 +137,9 @@ local function createColorPicker(config, parent, tab)
     cycleToggle.Parent = expansion
 
     cycleToggle.MouseButton1Click:Connect(function()
-        -- Local cycle toggle if needed
+        if config.CycleFunction then
+            config.CycleFunction()
+        end
     end)
 
     btn.MouseButton1Click:Connect(function()
@@ -561,12 +563,8 @@ local function Settings(config)
                 cp.Expansion.BackgroundColor3 = color
                 cp.Cycle.BackgroundColor3 = color
             end
-        end
-    })
-
-    tab:AddButton({
-        Text = "Cycle Tab Color",
-        Function = function()
+        end,
+        CycleFunction = function()
             cycling = not cycling
         end
     })
