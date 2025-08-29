@@ -428,7 +428,7 @@ end
 
 local function CreateTab(config)
     local color = Color3.fromRGB(unpack(config.Color))
-    local pos = UDim2.new(0, config.Pos[1], 0, config.Pos[2])
+    local pos = UDim2.new(0, config.Pos and config.Pos[1] or 800, 0, config.Pos and config.Pos[2] or 300)
     local width = config.Width or 200
 
     local container = Instance.new("Frame")
@@ -446,7 +446,7 @@ local function CreateTab(config)
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(1, -30, 1, 0)
     label.Position = UDim2.new(0, 0, 0, 0)
-    label.Text = config.Text
+    label.Text = config.Text or "Tab"
     label.TextColor3 = Color3.new(1, 1, 1)
     label.BackgroundTransparency = 1
     label.Font = Enum.Font.Code
@@ -516,12 +516,13 @@ local function CreateTab(config)
     return tab
 end
 
-local function CreateSettingsTab()
+local function Settings(config)
+    config = config or {}
     local tab = CreateTab({
-        Text = "Settings",
-        Color = {255, 255, 255},
-        Pos = {900, 300},
-        Width = 220
+        Text = config.Text or "Settings",
+        Color = config.Color or {255, 255, 255},
+        Width = config.Width or 220,
+        Pos = config.Pos or {900, 300}
     })
 
     local hue = 0
@@ -593,5 +594,5 @@ end
 
 return {
     CreateTab = CreateTab,
-    Settings = CreateSettingsTab
+    Settings = Settings
 }
