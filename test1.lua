@@ -7,7 +7,7 @@ local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "MeteorUILib"
 screenGui.ResetOnSpawn = false
 screenGui.IgnoreGuiInset = true
-screenGui.DisplayOrder = 9999 -- ensures UI stays on top
+screenGui.DisplayOrder = 9999
 screenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
 
 local backgroundTransparency = 0.3
@@ -79,7 +79,6 @@ local function createToggle(config, parent, tab)
     return btn
 end
 
--- Color Picker
 local function createColorPicker(config, parent, tab)
     local btn = createBaseElement(config, parent, tab)
     local isHovered = trackHover(btn)
@@ -147,22 +146,23 @@ local function createColorPicker(config, parent, tab)
         expansion.Visible = expanded
     end)
 
-RunService.RenderStepped:Connect(function()
-    local isActive = expanded or isHovered()
-    local showHighlight = highlightsEnabled and isActive
+    RunService.RenderStepped:Connect(function()
+        local isActive = expanded or isHovered()
+        local showHighlight = highlightsEnabled and isActive
 
-    -- Only highlight the button if hovered or expanded
-    btn.BackgroundColor3 = showHighlight and tab._Color or Color3.fromRGB(40, 40, 40)
-    btn.BackgroundTransparency = showHighlight and 0 or backgroundTransparency
+        if showHighlight then
+            btn.BackgroundColor3 = tab._Color
+            btn.BackgroundTransparency = 0
+        else
+            btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+            btn.BackgroundTransparency = 0 -- force opaque to block bleed
+        end
 
-    -- Only update expansion visuals if the panel is visible
-    if expanded then
-        expansion.BackgroundColor3 = tab._Color
-        cycleToggle.BackgroundColor3 = tab._Color
-    end
-end)
-
-
+        if expanded then
+            expansion.BackgroundColor3 = tab._Color
+            cycleToggle.BackgroundColor3 = tab._Color
+        end
+    end)
 
     table.insert(allColorPickers, {Button = btn, Expansion = expansion, Cycle = cycleToggle})
     return btn
@@ -252,11 +252,13 @@ local function createSlider(config, parent, tab)
     end)
 
     RunService.RenderStepped:Connect(function()
-        expansion.BackgroundColor3 = tab._Color
-        expansion.BackgroundTransparency = backgroundTransparency
         local showHighlight = highlightsEnabled and (expanded or isHovered())
         btn.BackgroundColor3 = showHighlight and tab._Color or Color3.fromRGB(40, 40, 40)
         btn.BackgroundTransparency = showHighlight and 0 or backgroundTransparency
+
+        if expanded then
+            expansion.BackgroundColor3 = tab._Color
+        end
     end)
 
     return btn
@@ -351,11 +353,13 @@ local function createSliderToggle(config, parent, tab)
     end)
 
     RunService.RenderStepped:Connect(function()
-        expansion.BackgroundColor3 = tab._Color
-        expansion.BackgroundTransparency = backgroundTransparency
         local showHighlight = highlightsEnabled and (state or isHovered())
         btn.BackgroundColor3 = showHighlight and tab._Color or Color3.fromRGB(40, 40, 40)
         btn.BackgroundTransparency = showHighlight and 0 or backgroundTransparency
+
+        if expansion.Visible then
+            expansion.BackgroundColor3 = tab._Color
+        end
     end)
 
     return btn
@@ -431,8 +435,10 @@ local function createDropdown(config, parent, tab)
         local showHighlight = highlightsEnabled and (toggled or isHovered())
         btn.BackgroundColor3 = showHighlight and tab._Color or Color3.fromRGB(40, 40, 40)
         btn.BackgroundTransparency = showHighlight and 0 or backgroundTransparency
-        expansion.BackgroundColor3 = tab._Color
-        expansion.BackgroundTransparency = backgroundTransparency
+
+        if toggled then
+            expansion.BackgroundColor3 = tab._Color
+        end
     end)
 
     return btn
@@ -589,8 +595,10 @@ local function Settings(config)
             end
             for _, cp in ipairs(allColorPickers) do
                 cp.Button.BackgroundColor3 = color
-                cp.Expansion.BackgroundColor3 = color
-                cp.Cycle.BackgroundColor3 = color
+                if cp.Expansion.Visible then
+                    cp.Expansion.BackgroundColor3 = color
+                    cp.Cycle.BackgroundColor3 = color
+                end
             end
         end
     end)
