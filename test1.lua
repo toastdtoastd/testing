@@ -9,6 +9,11 @@ screenGui.ResetOnSpawn = false
 screenGui.IgnoreGuiInset = true
 screenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
 
+local backgroundTransparency = 0.3
+local highlightTransparency = 0
+local currentColor = Color3.fromRGB(255, 255, 255)
+local allTabs = {}
+
 local function trackHover(button)
     local hovered = false
     button.MouseEnter:Connect(function() hovered = true end)
@@ -21,7 +26,7 @@ local function createBaseElement(config, parent, tab)
     button.Size = UDim2.new(1, 0, 0, 24)
     button.Text = config.Text
     button.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    button.BackgroundTransparency = 0.3
+    button.BackgroundTransparency = backgroundTransparency
     button.TextColor3 = Color3.new(1, 1, 1)
     button.Font = Enum.Font.Code
     button.TextSize = 16
@@ -37,14 +42,13 @@ local function createButton(config, parent, tab)
     local isHovered = trackHover(btn)
 
     RunService.RenderStepped:Connect(function()
-        if not btn:GetAttribute("Active") then
-            btn.BackgroundColor3 = isHovered() and tab._Color or Color3.fromRGB(40, 40, 40)
-        end
+        local active = btn:GetAttribute("Active")
+        btn.BackgroundColor3 = active and tab._Color or (isHovered() and tab._Color or Color3.fromRGB(40, 40, 40))
+        btn.BackgroundTransparency = active and highlightTransparency or backgroundTransparency
     end)
 
     btn.MouseButton1Click:Connect(function()
         btn:SetAttribute("Active", true)
-        btn.BackgroundColor3 = tab._Color
         if config.Function then config.Function() end
         wait(0.1)
         btn:SetAttribute("Active", false)
@@ -60,6 +64,7 @@ local function createToggle(config, parent, tab)
 
     RunService.RenderStepped:Connect(function()
         btn.BackgroundColor3 = state and tab._Color or (isHovered() and tab._Color or Color3.fromRGB(40, 40, 40))
+        btn.BackgroundTransparency = state and highlightTransparency or backgroundTransparency
     end)
 
     btn.MouseButton1Click:Connect(function()
@@ -80,7 +85,7 @@ local function createColorPicker(config, parent, tab)
     expansion.Size = btn.Size
     expansion.Position = UDim2.new(0, btn.Size.X.Offset, 0, 0)
     expansion.BackgroundColor3 = tab._Color
-    expansion.BackgroundTransparency = 0.3
+    expansion.BackgroundTransparency = backgroundTransparency
     expansion.BorderSizePixel = 0
     expansion.Visible = false
     expansion.Parent = btn
@@ -100,7 +105,7 @@ local function createColorPicker(config, parent, tab)
         box.PlaceholderText = ({"R", "G", "B"})[i]
         box.Text = ""
         box.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-        box.BackgroundTransparency = 0.3
+        box.BackgroundTransparency = backgroundTransparency
         box.TextColor3 = Color3.new(1, 1, 1)
         box.Font = Enum.Font.Code
         box.TextSize = 16
@@ -125,7 +130,7 @@ local function createColorPicker(config, parent, tab)
     cycleToggle.Position = UDim2.new(0, (#boxes) * spacing, 0, 0)
     cycleToggle.Text = "Cycle"
     cycleToggle.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    cycleToggle.BackgroundTransparency = 0.3
+    cycleToggle.BackgroundTransparency = backgroundTransparency
     cycleToggle.TextColor3 = Color3.new(1, 1, 1)
     cycleToggle.Font = Enum.Font.Code
     cycleToggle.TextSize = 16
@@ -149,6 +154,7 @@ local function createColorPicker(config, parent, tab)
         end
         if not expanded then
             btn.BackgroundColor3 = isHovered() and tab._Color or Color3.fromRGB(40, 40, 40)
+            btn.BackgroundTransparency = isHovered() and highlightTransparency or backgroundTransparency
         end
     end)
 
@@ -156,6 +162,7 @@ local function createColorPicker(config, parent, tab)
         expanded = not expanded
         expansion.Visible = expanded
         btn.BackgroundColor3 = expanded and tab._Color or Color3.fromRGB(40, 40, 40)
+        btn.BackgroundTransparency = expanded and highlightTransparency or backgroundTransparency
     end)
 
     return btn
@@ -174,7 +181,7 @@ local function createSlider(config, parent, tab)
     expansion.Size = btn.Size
     expansion.Position = UDim2.new(0, btn.Size.X.Offset, 0, 0)
     expansion.BackgroundColor3 = tab._Color
-    expansion.BackgroundTransparency = 0.3
+    expansion.BackgroundTransparency = backgroundTransparency
     expansion.BorderSizePixel = 0
     expansion.Visible = false
     expansion.Parent = btn
@@ -246,7 +253,9 @@ local function createSlider(config, parent, tab)
 
     RunService.RenderStepped:Connect(function()
         expansion.BackgroundColor3 = tab._Color
+        expansion.BackgroundTransparency = backgroundTransparency
         btn.BackgroundColor3 = expanded and tab._Color or (isHovered() and tab._Color or Color3.fromRGB(40, 40, 40))
+        btn.BackgroundTransparency = expanded and highlightTransparency or backgroundTransparency
     end)
 
     return btn
@@ -266,7 +275,7 @@ local function createSliderToggle(config, parent, tab)
     expansion.Size = btn.Size
     expansion.Position = UDim2.new(0, btn.Size.X.Offset, 0, 0)
     expansion.BackgroundColor3 = tab._Color
-    expansion.BackgroundTransparency = 0.3
+    expansion.BackgroundTransparency = backgroundTransparency
     expansion.BorderSizePixel = 0
     expansion.Visible = false
     expansion.Parent = btn
@@ -342,7 +351,9 @@ local function createSliderToggle(config, parent, tab)
 
     RunService.RenderStepped:Connect(function()
         expansion.BackgroundColor3 = tab._Color
+        expansion.BackgroundTransparency = backgroundTransparency
         btn.BackgroundColor3 = state and tab._Color or (isHovered() and tab._Color or Color3.fromRGB(40, 40, 40))
+        btn.BackgroundTransparency = state and highlightTransparency or backgroundTransparency
     end)
 
     return btn
@@ -359,7 +370,7 @@ local function createDropdown(config, parent, tab)
     expansion.Size = UDim2.new(0, 150, 0, 24 * #options)
     expansion.Position = UDim2.new(0, btn.Size.X.Offset, 0, 0)
     expansion.BackgroundColor3 = tab._Color
-    expansion.BackgroundTransparency = 0.3
+    expansion.BackgroundTransparency = backgroundTransparency
     expansion.BorderSizePixel = 0
     expansion.Visible = false
     expansion.Parent = btn
@@ -383,7 +394,7 @@ local function createDropdown(config, parent, tab)
         sub.Size = UDim2.new(1, 0, 0, 24)
         sub.Text = label
         sub.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-        sub.BackgroundTransparency = 0.3
+        sub.BackgroundTransparency = backgroundTransparency
         sub.TextColor3 = Color3.new(1, 1, 1)
         sub.Font = Enum.Font.Code
         sub.TextSize = 16
@@ -404,6 +415,7 @@ local function createDropdown(config, parent, tab)
 
         RunService.RenderStepped:Connect(function()
             sub.BackgroundColor3 = states[label] and tab._Color or (hovered and tab._Color or Color3.fromRGB(40, 40, 40))
+            sub.BackgroundTransparency = states[label] and highlightTransparency or backgroundTransparency
         end)
     end
 
@@ -414,7 +426,9 @@ local function createDropdown(config, parent, tab)
 
     RunService.RenderStepped:Connect(function()
         btn.BackgroundColor3 = toggled and tab._Color or (isHovered() and tab._Color or Color3.fromRGB(40, 40, 40))
+        btn.BackgroundTransparency = toggled and highlightTransparency or backgroundTransparency
         expansion.BackgroundColor3 = tab._Color
+        expansion.BackgroundTransparency = backgroundTransparency
     end)
 
     return btn
@@ -523,6 +537,7 @@ local function CreateTab(config)
         return createDropdown(cfg, body, tab)
     end
 
+    table.insert(allTabs, tab)
     return tab
 end
 
@@ -534,38 +549,25 @@ local function CreateSettingsTab()
         Width = 220
     })
 
-    local currentTransparency = 0.3
-    local currentColor = Color3.fromRGB(255, 255, 255)
-    local allTabs = {}
-
-    local function applyTransparency()
-        for _, t in ipairs(allTabs) do
-            for _, obj in ipairs(t._Header.Parent:GetDescendants()) do
-                if obj:IsA("TextButton") or obj:IsA("TextLabel") or obj:IsA("Frame") then
-                    if obj.Size == UDim2.new(1, 0, 0, 24) then
-                        obj.BackgroundTransparency = currentTransparency
-                    end
-                end
-            end
-        end
-    end
-
-    local function applyColor()
-        for _, t in ipairs(allTabs) do
-            t._Color = currentColor
-            t._Header.BackgroundColor3 = currentColor
-        end
-    end
-
     tab:AddSlider({
-        Text = "UI Transparency",
-        Value = currentTransparency,
+        Text = "Background Transparency",
+        Value = backgroundTransparency,
         Precise = true,
         Min = 0,
         Max = 1,
         Function = function(val)
-            currentTransparency = val
-            applyTransparency()
+            backgroundTransparency = val
+        end
+    })
+
+    tab:AddSlider({
+        Text = "Highlight Transparency",
+        Value = highlightTransparency,
+        Precise = true,
+        Min = 0,
+        Max = 1,
+        Function = function(val)
+            highlightTransparency = val
         end
     })
 
@@ -573,16 +575,15 @@ local function CreateSettingsTab()
         Text = "Tab Color",
         Function = function(color)
             currentColor = color
-            applyColor()
+            for _, t in ipairs(allTabs) do
+                t._Color = color
+                t._Header.BackgroundColor3 = color
+            end
         end
     })
 
-    table.insert(allTabs, tab)
-
     return tab, function(registerTab)
         table.insert(allTabs, registerTab)
-        applyTransparency()
-        applyColor()
     end
 end
 
@@ -590,3 +591,5 @@ return {
     CreateTab = CreateTab,
     Settings = CreateSettingsTab
 }
+
+            
