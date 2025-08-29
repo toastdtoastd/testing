@@ -526,6 +526,67 @@ local function CreateTab(config)
     return tab
 end
 
+local function CreateSettingsTab()
+    local tab = CreateTab({
+        Text = "Settings",
+        Color = {255, 255, 255},
+        Pos = {900, 300},
+        Width = 220
+    })
+
+    local currentTransparency = 0.3
+    local currentColor = Color3.fromRGB(255, 255, 255)
+    local allTabs = {}
+
+    local function applyTransparency()
+        for _, t in ipairs(allTabs) do
+            for _, obj in ipairs(t._Header.Parent:GetDescendants()) do
+                if obj:IsA("TextButton") or obj:IsA("TextLabel") or obj:IsA("Frame") then
+                    if obj.Size == UDim2.new(1, 0, 0, 24) then
+                        obj.BackgroundTransparency = currentTransparency
+                    end
+                end
+            end
+        end
+    end
+
+    local function applyColor()
+        for _, t in ipairs(allTabs) do
+            t._Color = currentColor
+            t._Header.BackgroundColor3 = currentColor
+        end
+    end
+
+    tab:AddSlider({
+        Text = "UI Transparency",
+        Value = currentTransparency,
+        Precise = true,
+        Min = 0,
+        Max = 1,
+        Function = function(val)
+            currentTransparency = val
+            applyTransparency()
+        end
+    })
+
+    tab:AddColorPicker({
+        Text = "Tab Color",
+        Function = function(color)
+            currentColor = color
+            applyColor()
+        end
+    })
+
+    table.insert(allTabs, tab)
+
+    return tab, function(registerTab)
+        table.insert(allTabs, registerTab)
+        applyTransparency()
+        applyColor()
+    end
+end
+
 return {
-    CreateTab = CreateTab
+    CreateTab = CreateTab,
+    Settings = CreateSettingsTab
 }
