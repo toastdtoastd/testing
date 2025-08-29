@@ -10,7 +10,7 @@ screenGui.IgnoreGuiInset = true
 screenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
 
 local backgroundTransparency = 0.3
-local highlightTransparency = 0
+local highlightsEnabled = true
 local currentColor = Color3.fromRGB(255, 255, 255)
 local allTabs = {}
 
@@ -43,8 +43,9 @@ local function createButton(config, parent, tab)
 
     RunService.RenderStepped:Connect(function()
         local active = btn:GetAttribute("Active")
-        btn.BackgroundColor3 = active and tab._Color or (isHovered() and tab._Color or Color3.fromRGB(40, 40, 40))
-        btn.BackgroundTransparency = active and highlightTransparency or backgroundTransparency
+        local showHighlight = highlightsEnabled and (active or isHovered())
+        btn.BackgroundColor3 = showHighlight and tab._Color or Color3.fromRGB(40, 40, 40)
+        btn.BackgroundTransparency = showHighlight and 0 or backgroundTransparency
     end)
 
     btn.MouseButton1Click:Connect(function()
@@ -63,8 +64,9 @@ local function createToggle(config, parent, tab)
     local isHovered = trackHover(btn)
 
     RunService.RenderStepped:Connect(function()
-        btn.BackgroundColor3 = state and tab._Color or (isHovered() and tab._Color or Color3.fromRGB(40, 40, 40))
-        btn.BackgroundTransparency = state and highlightTransparency or backgroundTransparency
+        local showHighlight = highlightsEnabled and (state or isHovered())
+        btn.BackgroundColor3 = showHighlight and tab._Color or Color3.fromRGB(40, 40, 40)
+        btn.BackgroundTransparency = showHighlight and 0 or backgroundTransparency
     end)
 
     btn.MouseButton1Click:Connect(function()
@@ -152,17 +154,14 @@ local function createColorPicker(config, parent, tab)
             cycleToggle.BackgroundColor3 = color
             if config.Function then config.Function(color) end
         end
-        if not expanded then
-            btn.BackgroundColor3 = isHovered() and tab._Color or Color3.fromRGB(40, 40, 40)
-            btn.BackgroundTransparency = isHovered() and highlightTransparency or backgroundTransparency
-        end
+        local showHighlight = highlightsEnabled and isHovered()
+        btn.BackgroundColor3 = showHighlight and tab._Color or Color3.fromRGB(40, 40, 40)
+        btn.BackgroundTransparency = showHighlight and 0 or backgroundTransparency
     end)
 
     btn.MouseButton1Click:Connect(function()
         expanded = not expanded
         expansion.Visible = expanded
-        btn.BackgroundColor3 = expanded and tab._Color or Color3.fromRGB(40, 40, 40)
-        btn.BackgroundTransparency = expanded and highlightTransparency or backgroundTransparency
     end)
 
     return btn
@@ -254,8 +253,9 @@ local function createSlider(config, parent, tab)
     RunService.RenderStepped:Connect(function()
         expansion.BackgroundColor3 = tab._Color
         expansion.BackgroundTransparency = backgroundTransparency
-        btn.BackgroundColor3 = expanded and tab._Color or (isHovered() and tab._Color or Color3.fromRGB(40, 40, 40))
-        btn.BackgroundTransparency = expanded and highlightTransparency or backgroundTransparency
+        local showHighlight = highlightsEnabled and (expanded or isHovered())
+        btn.BackgroundColor3 = showHighlight and tab._Color or Color3.fromRGB(40, 40, 40)
+        btn.BackgroundTransparency = showHighlight and 0 or backgroundTransparency
     end)
 
     return btn
@@ -352,8 +352,9 @@ local function createSliderToggle(config, parent, tab)
     RunService.RenderStepped:Connect(function()
         expansion.BackgroundColor3 = tab._Color
         expansion.BackgroundTransparency = backgroundTransparency
-        btn.BackgroundColor3 = state and tab._Color or (isHovered() and tab._Color or Color3.fromRGB(40, 40, 40))
-        btn.BackgroundTransparency = state and highlightTransparency or backgroundTransparency
+        local showHighlight = highlightsEnabled and (state or isHovered())
+        btn.BackgroundColor3 = showHighlight and tab._Color or Color3.fromRGB(40, 40, 40)
+        btn.BackgroundTransparency = showHighlight and 0 or backgroundTransparency
     end)
 
     return btn
@@ -414,8 +415,9 @@ local function createDropdown(config, parent, tab)
         end)
 
         RunService.RenderStepped:Connect(function()
-            sub.BackgroundColor3 = states[label] and tab._Color or (hovered and tab._Color or Color3.fromRGB(40, 40, 40))
-            sub.BackgroundTransparency = states[label] and highlightTransparency or backgroundTransparency
+            local showHighlight = highlightsEnabled and (states[label] or hovered)
+            sub.BackgroundColor3 = showHighlight and tab._Color or Color3.fromRGB(40, 40, 40)
+            sub.BackgroundTransparency = showHighlight and 0 or backgroundTransparency
         end)
     end
 
@@ -425,8 +427,9 @@ local function createDropdown(config, parent, tab)
     end)
 
     RunService.RenderStepped:Connect(function()
-        btn.BackgroundColor3 = toggled and tab._Color or (isHovered() and tab._Color or Color3.fromRGB(40, 40, 40))
-        btn.BackgroundTransparency = toggled and highlightTransparency or backgroundTransparency
+        local showHighlight = highlightsEnabled and (toggled or isHovered())
+        btn.BackgroundColor3 = showHighlight and tab._Color or Color3.fromRGB(40, 40, 40)
+        btn.BackgroundTransparency = showHighlight and 0 or backgroundTransparency
         expansion.BackgroundColor3 = tab._Color
         expansion.BackgroundTransparency = backgroundTransparency
     end)
@@ -560,14 +563,11 @@ local function CreateSettingsTab()
         end
     })
 
-    tab:AddSlider({
-        Text = "Highlight Transparency",
-        Value = highlightTransparency,
-        Precise = true,
-        Min = 0,
-        Max = 1,
-        Function = function(val)
-            highlightTransparency = val
+    tab:AddToggle({
+        Text = "Enable Highlights",
+        State = highlightsEnabled,
+        Function = function(state)
+            highlightsEnabled = state
         end
     })
 
@@ -591,5 +591,3 @@ return {
     CreateTab = CreateTab,
     Settings = CreateSettingsTab
 }
-
-            
