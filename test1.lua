@@ -7,6 +7,7 @@ local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "MeteorUILib"
 screenGui.ResetOnSpawn = false
 screenGui.IgnoreGuiInset = true
+screenGui.DisplayOrder = 9999
 screenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
 
 local backgroundTransparency = 0.3
